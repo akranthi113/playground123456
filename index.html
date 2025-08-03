@@ -114,6 +114,16 @@
             color: #000;
         }
 
+        /* Style for the floating cloned planet during touch drag */
+        .planet.dragging-clone {
+            position: fixed;
+            z-index: 1000;
+            opacity: 0.8;
+            pointer-events: none; /* Allows elements underneath to be detected */
+            transition: none; /* No transition while dragging */
+            cursor: grabbing;
+        }
+
         .planet-symbol {
             font-weight: bold;
             font-size: 1em;
@@ -184,7 +194,7 @@
             gap: 2px;
         }
 
-        .planets-container.drag-over {
+        .planets-container.drag-over, #planet-bank.drag-over {
             background-color: #2a2a2a;
             border: 1px dashed #999;
         }
@@ -619,10 +629,10 @@
                 <span class="planet Mars" draggable="true" id="Mars"><span class="planet-symbol">Ma</span></span>
                 <span class="planet Mercury" draggable="true" id="Mercury"><span class="planet-symbol">Me</span></span>
                 <span class="planet Jupiter" draggable="true" id="Jupiter"><span class="planet-symbol">Ju</span></span>
-                <span class="planet Venus" draggable="true" id="Venus"><span class="planet-symbol">Ve</span></span>
-                <span class="planet Saturn" draggable="true" id="Saturn"><span class="planet-symbol">Sa</span></span>
-                <span class="planet Rahu" draggable="true" id="Rahu"><span class="planet-symbol">Ra</span></span>
-                <span class="planet Ketu" draggable="true" id="Ketu"><span class="planet-symbol">Ke</span></span>
+                <span class="planet Venus" draggable="true" id="Ve"><span class="planet-symbol">Ve</span></span>
+                <span class="planet Saturn" draggable="true" id="Sa"><span class="planet-symbol">Sa</span></span>
+                <span class="planet Rahu" draggable="true" id="Ra"><span class="planet-symbol">Ra</span></span>
+                <span class="planet Ketu" draggable="true" id="Ke"><span class="planet-symbol">Ke</span></span>
             </div>
         </div>
         <button onclick="resetChart()">Clear Chart</button>
@@ -1032,30 +1042,31 @@
 
         let currentLanguage = "en"; // Default language
 
-        let draggedPlanetId = null;
+        let draggedPlanetId = null; // ID of the ORIGINAL planet being dragged
+        let floatingPlanetClone = null; // The visual clone used for touch drag
+        let originalParentOfDraggedPlanet = null; // To put it back if drag fails
+
         const planetDegrees = {}; // Stores { sign: "...", degree: #, isRetrograde: boolean }
         let initialPlanetBankHTML = '';
         let lagnaSign = null;
 
         let isChangingDegree = false;
-        let degreeChangePlanet = null;
-        let initialMouseY = 0;
+        let degreeChangePlanet = null; // The actual planet element being degree-adjusted
+        let initialTouchY = 0; // For touch degree adjustment
         let initialPlanetDegree = 0;
 
-        // Touch event related variables
+        // Touch event related variables for gesture detection
         let touchStartTimer = null;
-        let touchStartX = 0;
-        let touchStartY = 0;
-        const DOUBLE_TAP_THRESHOLD_MS = 300;
-        const LONG_PRESS_THRESHOLD_MS = 500;
         let lastTapTime = 0;
+        const DOUBLE_TAP_THRESHOLD_MS = 300;
+        const LONG_PRESS_THRESHOLD_MS = 500; // Time for long press to start drag/degree adjust
 
         const planetTooltip = document.getElementById('planet-tooltip');
         const signHouseTooltip = document.getElementById('sign-house-tooltip');
         const retrogradePanel = document.getElementById('retrograde-panel');
         const retrogradeCheckbox = document.getElementById('retrograde-checkbox');
         const panelPlanetName = retrogradePanel.querySelector('.panel-planet-name');
-        let selectedPlanetForRetrograde = null;
+        let selectedPlanetForRetrograde = null; // The actual planet element selected for retrograde
 
         document.addEventListener('DOMContentLoaded', () => {
             initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML;
@@ -1072,31 +1083,25 @@
         });
 
         function attachDelegatedListeners() {
-            // Mouse events for desktop/hybrid devices
+            // Mouse events for desktop/hybrid devices (standard drag/drop + click for retrograde/degree)
             document.addEventListener('dragstart', handleDragStart);
             document.addEventListener('dragend', handleDragEnd);
             document.addEventListener('mousedown', handleMouseDown);
             document.addEventListener('mouseup', handleMouseUp);
-            document.addEventListener('dblclick', handleDblClick);
-            document.addEventListener('mousemove', handleMouseMoveForTooltip);
+            document.addEventListener('mousemove', handleMouseMove); // Combined for degree and tooltip
 
-            // Touch events for mobile/tablet
+            // Touch events for mobile/tablet (custom gestures for drag/drop/degree/tap)
             document.addEventListener('touchstart', handleTouchStart, { passive: false });
             document.addEventListener('touchmove', handleTouchMove, { passive: false });
             document.addEventListener('touchend', handleTouchEnd);
-            document.addEventListener('touchcancel', handleTouchCancel); // Added for robustness
+            document.addEventListener('touchcancel', handleTouchCancel);
 
-
+            // Dragover/drop listeners for containers (common for mouse and touch drop)
             document.querySelectorAll('.planets-container').forEach(container => {
                 container.addEventListener('dragover', allowDrop);
                 container.addEventListener('drop', dropToChart);
                 container.addEventListener('dragleave', removeDragOverHighlight);
-                container.addEventListener('mouseover', handleContainerMouseOver);
-                container.addEventListener('mouseout', handleContainerMouseOut);
-                // click handler for planet tooltip/retrograde panel already exists
-                container.addEventListener('click', handlePlanetClick);
             });
-
             const planetBank = document.getElementById('planet-bank');
             planetBank.addEventListener('dragover', allowDrop);
             planetBank.addEventListener('drop', dropToBank);
@@ -1104,19 +1109,115 @@
 
             retrogradeCheckbox.addEventListener('change', toggleRetrograde);
 
-            document.addEventListener('click', handleOutsideClick);
+            document.addEventListener('click', handleOutsideClick); // For closing panels/tooltips
 
             document.querySelectorAll('.sign-label').forEach(label => {
                 label.addEventListener('mouseover', handleSignLabelMouseOver);
                 label.addEventListener('mouseout', handleSignLabelMouseOut);
                 label.addEventListener('mousemove', handleSignLabelMouseMove);
-
-                // Touch support for sign labels
-                label.addEventListener('touchstart', handleSignLabelTouchStart, { passive: false });
-                label.addEventListener('touchend', handleSignLabelTouchEnd);
-                label.addEventListener('touchmove', handleSignLabelMouseMove, { passive: false });
+                label.addEventListener('click', handleSignLabelMouseOver); // For mobile click to show tooltip
             });
         }
+
+        // --- Mouse Event Handlers (primarily for desktop, fallbacks for hybrid devices) ---
+
+        function handleDragStart(e) {
+            const planetElement = e.target.closest('.planet');
+            if (planetElement && !isChangingDegree) { // Don't start native drag if already adjusting degree
+                draggedPlanetId = planetElement.id;
+                originalParentOfDraggedPlanet = planetElement.parentElement;
+                e.dataTransfer.setData('text/plain', draggedPlanetId);
+                e.dataTransfer.effectAllowed = 'move';
+                planetElement.style.opacity = '0.5'; // Visual feedback for native drag
+                hideTooltip();
+                hideSignHouseTooltip();
+                hideRetrogradePanel();
+            } else {
+                e.preventDefault(); // Prevent native drag if we're in degree change mode
+            }
+        }
+
+        function handleDragEnd(e) {
+            const planetElement = e.target.closest('.planet');
+            if (planetElement) {
+                planetElement.style.opacity = '1';
+                draggedPlanetId = null;
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            }
+        }
+
+        function handleMouseDown(e) {
+            const planetElement = e.target.closest('.planet');
+            if (!planetElement) return;
+
+            if (planetElement.parentElement.classList.contains('planets-container')) {
+                // Click on a planet in the chart for degree adjustment
+                e.preventDefault(); // Prevent text selection etc.
+                isChangingDegree = true;
+                degreeChangePlanet = planetElement;
+                initialTouchY = e.clientY; // Use clientY for mouse
+                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
+
+                document.addEventListener('mousemove', handleDegreeChangeMouseMove);
+                hideTooltip();
+                hideSignHouseTooltip();
+                hideRetrogradePanel();
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isChangingDegree) {
+                isChangingDegree = false;
+                degreeChangePlanet = null;
+                document.removeEventListener('mousemove', handleDegreeChangeMouseMove);
+            }
+        }
+
+        function handleDegreeChangeMouseMove(e) {
+            if (!isChangingDegree || !degreeChangePlanet) return;
+
+            const deltaY = initialTouchY - e.clientY;
+            const degreeChange = deltaY / 20; // Sensitivity
+            let newDegree = initialPlanetDegree + degreeChange;
+
+            newDegree = Math.max(0, Math.min(29.99, newDegree)); // Keep between 0 and 29.99
+
+            if (planetDegrees[degreeChangePlanet.id]) {
+                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
+                updatePlanetDegreeDisplay(degreeChangePlanet);
+                showTooltip(degreeChangePlanet); // Keep tooltip updated
+            }
+        }
+
+        function handleMouseMove(e) {
+            // Mouse move for general tooltip hovering (not degree change)
+            if (!isChangingDegree) {
+                const planetElement = e.target.closest('.planet');
+                const signLabel = e.target.closest('.sign-label');
+
+                if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
+                    showTooltip(planetElement);
+                    hideSignHouseTooltip();
+                } else {
+                    hideTooltip();
+                }
+
+                if (signLabel) {
+                    handleSignLabelMouseOver(e); // Will also position it
+                } else {
+                    hideSignHouseTooltip();
+                }
+            }
+        }
+
+        // Double click for removal (desktop)
+        document.addEventListener('dblclick', (e) => {
+            const planetToRemove = e.target.closest('.planet');
+            if (!planetToRemove || !planetToRemove.parentElement.classList.contains('planets-container')) return;
+
+            movePlanetToBank(planetToRemove);
+        });
+
 
         // --- Touch Event Handlers for Mobile ---
 
@@ -1125,89 +1226,232 @@
             hideSignHouseTooltip();
             hideRetrogradePanel();
 
-            const planetElement = e.target.closest('.planet');
-            if (!planetElement) {
-                // Not a planet touch, clear any active state
+            const touchedElement = e.target.closest('.planet') || e.target.closest('.sign-label');
+
+            if (!touchedElement) {
+                // If not touching a specific interactive element, clear any pending gestures
                 if (touchStartTimer) clearTimeout(touchStartTimer);
                 isChangingDegree = false;
                 degreeChangePlanet = null;
+                floatingPlanetClone = null;
+                draggedPlanetId = null;
                 return;
             }
 
-            e.preventDefault(); // Prevent default browser touch behaviors like scrolling/zooming
+            // Prevent default scrolling/zooming if interaction is with a draggable/interactive element
+            if (e.touches.length === 1 && (touchedElement.classList.contains('planet') || touchedElement.classList.contains('sign-label'))) {
+                e.preventDefault();
+            }
 
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
+            const currentTouchX = e.touches[0].clientX;
+            const currentTouchY = e.touches[0].clientY;
 
-            if (planetElement.parentElement.classList.contains('planets-container')) {
-                // If touching a planet in the chart
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
+            if (touchedElement.classList.contains('planet')) {
+                const planetElement = touchedElement;
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTapTime;
 
-                if (tapLength < DOUBLE_TAP_THRESHOLD_MS && tapLength > 0) {
-                    // Double tap logic for removal (similar to dblclick)
-                    if (touchStartTimer) clearTimeout(touchStartTimer);
-                    handleDblClick(e);
-                    lastTapTime = 0; // Reset
-                } else {
-                    // Start long press timer for drag or degree adjustment
-                    lastTapTime = currentTime;
+                if (planetElement.parentElement.id === 'planet-bank') {
+                    // Planet in the bank: Prepare for drag (long press)
                     touchStartTimer = setTimeout(() => {
-                        // Long press detected
-                        if (e.touches.length === 1) { // Only one finger for drag/degree adjust
-                            if (planetElement.parentElement.classList.contains('planets-container')) {
-                                // Assume degree change for planets already in chart
-                                isChangingDegree = true;
-                                degreeChangePlanet = planetElement;
-                                initialMouseY = e.touches[0].clientY;
-                                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
-                                showTooltip(planetElement); // Show tooltip immediately for degree change
-                            }
+                        if (e.touches.length === 1) { // Confirm single touch for drag
+                            draggedPlanetId = planetElement.id;
+                            originalParentOfDraggedPlanet = planetElement.parentElement; // Bank is original parent
+
+                            // Create a clone for visual drag
+                            floatingPlanetClone = planetElement.cloneNode(true);
+                            floatingPlanetClone.classList.add('dragging-clone');
+                            floatingPlanetClone.style.width = `${planetElement.offsetWidth}px`;
+                            floatingPlanetClone.style.height = `${planetElement.offsetHeight}px`;
+                            document.body.appendChild(floatingPlanetClone);
+                            updateFloatingPlanetPosition(currentTouchX, currentTouchY, floatingPlanetClone);
+                            planetElement.style.opacity = '0'; // Hide original temporarily
                         }
                     }, LONG_PRESS_THRESHOLD_MS);
-                }
-            } else if (planetElement.parentElement.id === 'planet-bank') {
-                // If touching a planet in the bank, prepare for drag
-                touchStartTimer = setTimeout(() => {
-                    // Long press detected for drag from bank
-                    if (e.touches.length === 1) {
-                        draggedPlanetId = planetElement.id;
-                        planetElement.style.opacity = '0.5';
-                        planetElement.classList.add('dragging-from-bank'); // Add a class to make it float visually
-                        // Temporarily append to body to float it
-                        document.body.appendChild(planetElement);
-                        planetElement.style.position = 'absolute';
-                        planetElement.style.zIndex = '1000';
-                        updateFloatingPlanetPosition(e.touches[0].clientX, e.touches[0].clientY, planetElement);
+                } else if (planetElement.parentElement.classList.contains('planets-container')) {
+                    // Planet in the chart
+                    if (tapLength < DOUBLE_TAP_THRESHOLD_MS && tapLength > 0) {
+                        // Double tap: Remove planet
+                        if (touchStartTimer) clearTimeout(touchStartTimer);
+                        movePlanetToBank(planetElement);
+                        lastTapTime = 0; // Reset double tap
+                    } else {
+                        // Single tap or potential long press for degree adjust
+                        lastTapTime = currentTime;
+                        touchStartTimer = setTimeout(() => {
+                            if (e.touches.length === 1) {
+                                isChangingDegree = true;
+                                degreeChangePlanet = planetElement;
+                                initialTouchY = currentTouchY;
+                                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
+                                showTooltip(planetElement); // Show tooltip during degree change
+                            }
+                        }, LONG_PRESS_THRESHOLD_MS);
                     }
-                }, LONG_PRESS_THRESHOLD_MS);
+                }
+            } else if (touchedElement.classList.contains('sign-label')) {
+                // Sign label tap: Show sign/house tooltip
+                handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
             }
         }
 
 
         function handleTouchMove(e) {
-            e.preventDefault(); // Prevent scrolling
-
-            if (isChangingDegree && degreeChangePlanet) {
-                const deltaY = initialMouseY - e.touches[0].clientY;
-                const degreeChange = deltaY / 10; // Make degree change faster for touch
-                let newDegree = initialPlanetDegree + degreeChange;
-
-                newDegree = Math.max(0, Math.min(29.99, newDegree));
-
-                if (planetDegrees[degreeChangePlanet.id]) {
-                    planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
-                    updatePlanetDegreeDisplay(degreeChangePlanet);
-                    showTooltip(degreeChangePlanet);
+            if (e.touches.length > 1) { // Ignore multi-touch for now
+                if (touchStartTimer) clearTimeout(touchStartTimer);
+                if (floatingPlanetClone) { // If dragging, end drag on multi-touch
+                    handleTouchCancel(e);
                 }
-            } else if (draggedPlanetId) {
-                const floatingPlanet = document.getElementById(draggedPlanetId);
-                if (floatingPlanet && floatingPlanet.classList.contains('dragging-from-bank')) {
-                    updateFloatingPlanetPosition(e.touches[0].clientX, e.touches[0].clientY, floatingPlanet);
-                    // Highlight the container it's currently over
-                    highlightDropTarget(e.touches[0].clientX, e.touches[0].clientY);
+                return;
+            }
+
+            const currentTouchX = e.touches[0].clientX;
+            const currentTouchY = e.touches[0].clientY;
+
+            if (floatingPlanetClone && draggedPlanetId) {
+                // Actively dragging a planet clone
+                e.preventDefault(); // Prevent scrolling while dragging
+                updateFloatingPlanetPosition(currentTouchX, currentTouchY, floatingPlanetClone);
+                highlightDropTarget(currentTouchX, currentTouchY);
+            } else if (isChangingDegree && degreeChangePlanet) {
+                // Actively adjusting degree
+                e.preventDefault(); // Prevent scrolling while adjusting degree
+                handleDegreeChangeMouseMove({ clientY: currentTouchY }); // Simulate mouse event for degree change
+            } else if (touchStartTimer) {
+                // If a timer is running (for long press), and significant movement occurs, cancel the timer
+                // This differentiates a "tap" from a "drag" attempt
+                const dx = Math.abs(currentTouchX - (e.changedTouches[0].clientX || currentTouchX));
+                const dy = Math.abs(currentTouchY - (e.changedTouches[0].clientY || currentTouchY));
+                const movementThreshold = 10; // Pixels
+                if (dx > movementThreshold || dy > movementThreshold) {
+                    clearTimeout(touchStartTimer);
+                    touchStartTimer = null;
                 }
             }
+        }
+
+        function handleTouchEnd(e) {
+            // Clear any pending long-press timer
+            if (touchStartTimer) {
+                clearTimeout(touchStartTimer);
+                touchStartTimer = null;
+            }
+
+            // Cleanup after degree adjustment
+            if (isChangingDegree) {
+                isChangingDegree = false;
+                degreeChangePlanet = null;
+                hideTooltip();
+                return; // Stop here if it was a degree adjustment gesture
+            }
+
+            // Handle actual drop if a clone was being dragged
+            if (floatingPlanetClone && draggedPlanetId) {
+                const dropPointX = e.changedTouches[0].clientX;
+                const dropPointY = e.changedTouches[0].clientY;
+                const dropTarget = document.elementFromPoint(dropPointX, dropPointY);
+
+                let targetContainer = null;
+                if (dropTarget) {
+                    targetContainer = dropTarget.closest('.planets-container') || dropTarget.closest('#planet-bank');
+                }
+
+                const originalPlanet = document.getElementById(draggedPlanetId);
+
+                // Remove the floating clone
+                if (floatingPlanetClone && floatingPlanetClone.parentNode) {
+                    floatingPlanetClone.parentNode.removeChild(floatingPlanetClone);
+                }
+                floatingPlanetClone = null;
+
+                // Make original planet visible again
+                if (originalPlanet) {
+                    originalPlanet.style.opacity = '1';
+                }
+
+                if (targetContainer && targetContainer.classList.contains('planets-container')) {
+                    // Drop to a chart box
+                    if (originalPlanet.id === 'Lagna') {
+                        const existingLagna = document.querySelector('.planets-container .Lagna');
+                        if (existingLagna && existingLagna !== originalPlanet) {
+                            movePlanetToBank(existingLagna); // Move existing Lagna to bank first
+                        }
+                    }
+                    targetContainer.appendChild(originalPlanet);
+                    const sign = targetContainer.dataset.sign;
+                    if (!planetDegrees[originalPlanet.id]) {
+                        planetDegrees[originalPlanet.id] = {
+                            sign: sign,
+                            degree: parseFloat((Math.random() * 30).toFixed(2)),
+                            isRetrograde: false
+                        };
+                    } else {
+                        planetDegrees[originalPlanet.id].sign = sign;
+                    }
+                    updatePlanetDegreeDisplay(originalPlanet);
+                    updateRetrogradeSymbol(originalPlanet);
+
+                    if (originalPlanet.id === 'Lagna') {
+                        lagnaSign = sign;
+                        updateHouseNumbers();
+                    }
+
+                } else if (targetContainer && targetContainer.id === 'planet-bank') {
+                    // Drop to the planet bank
+                    movePlanetToBank(originalPlanet);
+                } else {
+                    // Dropped nowhere valid, return to original parent
+                    if (originalParentOfDraggedPlanet) {
+                        originalParentOfDraggedPlanet.appendChild(originalPlanet);
+                        if (originalPlanet.id === 'Lagna' && originalParentOfDraggedPlanet.id === 'planet-bank') {
+                             lagnaSign = null; // Lagna back to bank means no Lagna in chart
+                             updateHouseNumbers();
+                        }
+                    }
+                    // If it was from chart, and dropped outside, re-add its data
+                    if (!originalParentOfDraggedPlanet.classList.contains('planets-container') && planetDegrees[originalPlanet.id]) {
+                         // This is a complex edge case - if it came from bank but dropped outside valid, it stays in bank.
+                         // If it came from chart and dropped outside, it should go back.
+                         // The logic above ensures it goes back to originalParent.
+                    }
+                }
+                draggedPlanetId = null; // Clear state
+                originalParentOfDraggedPlanet = null;
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            } else {
+                 // This was likely a quick tap on a planet in the chart (not a drag or degree adjust)
+                 // Or a tap on nothing.
+                const tappedPlanet = e.target.closest('.planet');
+                if (tappedPlanet && tappedPlanet.parentElement.classList.contains('planets-container')) {
+                    // This handles showing the retrograde panel on a single tap
+                    handlePlanetClick(e);
+                }
+            }
+
+            lastTapTime = new Date().getTime(); // Update last tap time for double tap detection
+        }
+
+
+        function handleTouchCancel(e) {
+            if (touchStartTimer) clearTimeout(touchStartTimer);
+            isChangingDegree = false;
+            degreeChangePlanet = null;
+            if (floatingPlanetClone && floatingPlanetClone.parentNode) {
+                floatingPlanetClone.parentNode.removeChild(floatingPlanetClone);
+                floatingPlanetClone = null;
+            }
+            if (draggedPlanetId && document.getElementById(draggedPlanetId)) {
+                document.getElementById(draggedPlanetId).style.opacity = '1'; // Show original planet
+                if (originalParentOfDraggedPlanet) {
+                     originalParentOfDraggedPlanet.appendChild(document.getElementById(draggedPlanetId));
+                }
+            }
+            draggedPlanetId = null;
+            originalParentOfDraggedPlanet = null;
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            hideTooltip();
+            hideSignHouseTooltip();
+            hideRetrogradePanel();
         }
 
         function updateFloatingPlanetPosition(x, y, planetEl) {
@@ -1229,148 +1473,7 @@
         }
 
 
-        function handleTouchEnd(e) {
-            if (touchStartTimer) {
-                clearTimeout(touchStartTimer);
-                touchStartTimer = null;
-            }
-
-            if (isChangingDegree) {
-                isChangingDegree = false;
-                degreeChangePlanet = null;
-                hideTooltip(); // Hide tooltip after degree adjustment
-            } else if (draggedPlanetId) {
-                // Handle drop for mobile drag
-                const floatingPlanet = document.getElementById(draggedPlanetId);
-                if (floatingPlanet && floatingPlanet.classList.contains('dragging-from-bank')) {
-                    floatingPlanet.style.position = '';
-                    floatingPlanet.style.zIndex = '';
-                    floatingPlanet.style.left = '';
-                    floatingPlanet.style.top = '';
-                    floatingPlanet.style.opacity = '1';
-                    floatingPlanet.classList.remove('dragging-from-bank');
-
-                    const dropTarget = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-                    let targetContainer = dropTarget ? (dropTarget.closest('.planets-container') || dropTarget.closest('#planet-bank')) : null;
-
-                    if (targetContainer && targetContainer.classList.contains('planets-container')) {
-                        // Place the planet back into the chart box
-                        const targetSign = targetContainer.dataset.sign;
-                        const originalParent = document.querySelector(`.chart-box[data-sign="${targetSign}"] .planets-container`);
-                        if (originalParent) {
-                            originalParent.appendChild(floatingPlanet);
-                            if (!planetDegrees[floatingPlanet.id]) {
-                                planetDegrees[floatingPlanet.id] = {
-                                    sign: targetSign,
-                                    degree: parseFloat((Math.random() * 30).toFixed(2)),
-                                    isRetrograde: false
-                                };
-                            } else {
-                                planetDegrees[floatingPlanet.id].sign = targetSign;
-                            }
-                            updatePlanetDegreeDisplay(floatingPlanet);
-                            updateRetrogradeSymbol(floatingPlanet);
-
-                            if (floatingPlanet.id === 'Lagna') {
-                                lagnaSign = targetSign;
-                                updateHouseNumbers();
-                            }
-                        }
-                    } else if (targetContainer && targetContainer.id === 'planet-bank') {
-                        // Place the planet back in the bank
-                        document.getElementById('planet-bank').appendChild(floatingPlanet);
-                        if (floatingPlanet.id === 'Lagna') {
-                            lagnaSign = null;
-                            updateHouseNumbers();
-                        }
-                        delete planetDegrees[floatingPlanet.id];
-                        updatePlanetDegreeDisplay(floatingPlanet);
-                        updateRetrogradeSymbol(floatingPlanet);
-                    } else {
-                        // If dropped outside valid areas, return to original parent or bank
-                        const originalParentId = floatingPlanet.dataset.originalParentId; // Store this on touchstart
-                        const originalParent = document.getElementById(originalParentId);
-                        if (originalParent) {
-                            originalParent.appendChild(floatingPlanet);
-                        } else {
-                            // Default to bank if no original parent or it's missing
-                            document.getElementById('planet-bank').appendChild(floatingPlanet);
-                            if (floatingPlanet.id === 'Lagna') {
-                                lagnaSign = null;
-                                updateHouseNumbers();
-                            }
-                            delete planetDegrees[floatingPlanet.id];
-                            updatePlanetDegreeDisplay(floatingPlanet);
-                            updateRetrogradeSymbol(floatingPlanet);
-                        }
-                    }
-                    draggedPlanetId = null;
-                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-                }
-            }
-
-            // Normal tap on a planet for retrograde panel (if not a drag or degree change)
-            if (!isChangingDegree && !draggedPlanetId && e.target.closest('.planet') && e.target.closest('.planets-container')) {
-                const tappedPlanet = e.target.closest('.planet');
-                handlePlanetClick({ target: tappedPlanet, stopPropagation: () => {} }); // Simulate click event
-            }
-             lastTapTime = new Date().getTime(); // Update last tap time
-        }
-
-        function handleTouchCancel(e) {
-            // Cleanup on touch interruption (e.g., call, notification)
-            if (touchStartTimer) clearTimeout(touchStartTimer);
-            isChangingDegree = false;
-            degreeChangePlanet = null;
-            if (draggedPlanetId) {
-                const floatingPlanet = document.getElementById(draggedPlanetId);
-                if (floatingPlanet && floatingPlanet.classList.contains('dragging-from-bank')) {
-                    // Put it back where it came from if it was dragged
-                    const originalParentId = floatingPlanet.dataset.originalParentId;
-                    const originalParent = document.getElementById(originalParentId) || document.getElementById('planet-bank');
-                    originalParent.appendChild(floatingPlanet);
-
-                    floatingPlanet.style.position = '';
-                    floatingPlanet.style.zIndex = '';
-                    floatingPlanet.style.left = '';
-                    floatingPlanet.style.top = '';
-                    floatingPlanet.style.opacity = '1';
-                    floatingPlanet.classList.remove('dragging-from-bank');
-                }
-                draggedPlanetId = null;
-            }
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            hideTooltip();
-            hideSignHouseTooltip();
-            hideRetrogradePanel();
-        }
-
-
-        // --- End Touch Event Handlers ---
-
-
-        // --- Drag & Drop Handlers (Kept for desktop support) ---
-
-        function handleDragStart(e) {
-            const planetElement = e.target.closest('.planet');
-            if (planetElement) {
-                draggedPlanetId = planetElement.id;
-                e.dataTransfer.setData('text/plain', draggedPlanetId);
-                e.dataTransfer.effectAllowed = 'move';
-                planetElement.style.opacity = '0.5';
-                hideTooltip();
-                hideSignHouseTooltip();
-                hideRetrogradePanel();
-            }
-        }
-
-        function handleDragEnd(e) {
-            const planetElement = e.target.closest('.planet');
-            if (planetElement) {
-                planetElement.style.opacity = '1';
-                draggedPlanetId = null;
-            }
-        }
+        // --- Common Drag & Drop Helper Functions ---
 
         function allowDrop(e) {
             e.preventDefault();
@@ -1402,32 +1505,20 @@
             const planetToMove = document.getElementById(draggedPlanetId);
             if (!planetToMove) return;
 
-            const currentParent = planetToMove.parentElement;
-
-            if (currentParent === targetContainer) return;
-
+            // Handle Lagna special case for desktop drag
             if (draggedPlanetId === 'Lagna') {
                 const existingLagna = document.querySelector('.planets-container .Lagna');
-                if (existingLagna) {
-                    const oldLagnaParent = existingLagna.parentElement;
-                    const planetBank = document.getElementById('planet-bank');
-
-                    if (oldLagnaParent !== planetBank) {
-                        oldLagnaParent.removeChild(existingLagna);
-                        planetBank.appendChild(existingLagna);
-                        delete planetDegrees[existingLagna.id];
-                        updatePlanetDegreeDisplay(existingLagna);
-                        updateRetrogradeSymbol(existingLagna);
-                    }
+                if (existingLagna && existingLagna !== planetToMove) { // If Lagna is already in a house and it's not the one we're dragging
+                    movePlanetToBank(existingLagna); // Move existing Lagna to bank
                 }
                 lagnaSign = targetContainer.dataset.sign;
                 updateHouseNumbers();
             }
 
-            if (currentParent && (currentParent.classList.contains('planets-container') || currentParent.id === 'planet-bank')) {
-                currentParent.removeChild(planetToMove);
+            // Move the planet
+            if (planetToMove.parentElement) { // If it has a parent (i.e., not just created)
+                planetToMove.parentElement.removeChild(planetToMove);
             }
-
             targetContainer.appendChild(planetToMove);
 
             const sign = targetContainer.dataset.sign;
@@ -1453,136 +1544,45 @@
             targetBank.classList.remove('drag-over');
             hideTooltip();
             hideSignHouseTooltip();
-            hideRetrogradePanel();
+                hideRetrogradePanel();
 
             const planetToMove = document.getElementById(draggedPlanetId);
             if (!planetToMove) return;
 
-            if (planetToMove.parentElement.id !== 'planet-bank') {
-                const currentParent = planetToMove.parentElement;
-                if (currentParent && currentParent.classList.contains('planets-container')) {
-                    currentParent.removeChild(planetToMove);
-                }
-                targetBank.appendChild(planetToMove);
-
-                if (planetToMove.id === 'Lagna') {
-                    lagnaSign = null;
-                    updateHouseNumbers();
-                }
-
-                delete planetDegrees[planetToMove.id];
-                updatePlanetDegreeDisplay(planetToMove);
-                updateRetrogradeSymbol(planetToMove);
-            }
+            movePlanetToBank(planetToMove);
         }
 
-        // --- Degree Change Handlers ---
-        // handleMouseDown/Up and handleDegreeChangeMouseMove are already robust enough for mouse,
-        // but for touch, we've implemented custom touch handling.
-        // These will still work for desktop clicks.
-
-        function handleMouseDown(e) {
-            const planetElement = e.target.closest('.planet');
+        function movePlanetToBank(planetElement) {
             if (!planetElement) return;
 
-            if (planetElement.parentElement.classList.contains('planets-container')) {
-                e.preventDefault();
-                isChangingDegree = true;
-                degreeChangePlanet = planetElement;
-                initialMouseY = e.clientY;
-                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
+            const currentContainer = planetElement.parentElement;
+            const planetBank = document.getElementById('planet-bank');
 
-                document.addEventListener('mousemove', handleDegreeChangeMouseMove);
-                hideTooltip();
-                hideSignHouseTooltip();
-                hideRetrogradePanel();
-            }
-        }
+            if (currentContainer && currentContainer !== planetBank) {
+                currentContainer.removeChild(planetElement);
+                planetBank.appendChild(planetElement);
 
-        function handleDegreeChangeMouseMove(e) {
-            if (!isChangingDegree || !degreeChangePlanet) return;
-
-            const deltaY = initialMouseY - e.clientY;
-            const degreeChange = deltaY / 20;
-            let newDegree = initialPlanetDegree + degreeChange;
-
-            newDegree = Math.max(0, Math.min(29.99, newDegree));
-
-            if (planetDegrees[degreeChangePlanet.id]) {
-                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
-                updatePlanetDegreeDisplay(degreeChangePlanet);
-                showTooltip(degreeChangePlanet);
-            }
-        }
-
-        function handleMouseUp() {
-            if (isChangingDegree) {
-                isChangingDegree = false;
-                degreeChangePlanet = null;
-                document.removeEventListener('mousemove', handleDegreeChangeMouseMove);
-            }
-        }
-
-        function handleDblClick(e) {
-            const planetToRemove = e.target.closest('.planet');
-            if (!planetToRemove) return;
-
-            const currentContainer = planetToRemove.parentElement;
-
-            if (currentContainer && currentContainer.classList.contains('planets-container')) {
-                currentContainer.removeChild(planetToRemove);
-                document.getElementById('planet-bank').appendChild(planetToRemove);
-
-                if (planetToRemove.id === 'Lagna') {
+                if (planetElement.id === 'Lagna') {
                     lagnaSign = null;
                     updateHouseNumbers();
                 }
 
-                delete planetDegrees[planetToRemove.id];
-                updatePlanetDegreeDisplay(planetToRemove);
-                updateRetrogradeSymbol(planetToRemove);
+                delete planetDegrees[planetElement.id];
+                updatePlanetDegreeDisplay(planetElement);
+                updateRetrogradeSymbol(planetElement); // Remove retrograde symbol if any
                 hideTooltip();
                 hideSignHouseTooltip();
                 hideRetrogradePanel();
             }
         }
+
 
         // --- Planet Tooltip Functions ---
 
-        function handleContainerMouseOver(e) {
-            const planetElement = e.target.closest('.planet');
-            if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
-                showTooltip(planetElement);
-            }
-        }
-
-        function handleContainerMouseOut(e) {
-            // Only hide tooltip if not actively changing degree or retrograde panel is not active
-            if (!isChangingDegree && !retrogradePanel.classList.contains('active')) {
-                const relatedTarget = e.relatedTarget;
-                // Check if relatedTarget is within the planet itself, the tooltip, or the retrograde panel
-                if (!relatedTarget || (!relatedTarget.closest('.planet') && !relatedTarget.closest('#planet-tooltip') && !relatedTarget.closest('#retrograde-panel') && !relatedTarget.closest('#sign-house-tooltip'))) {
-                    hideTooltip();
-                }
-            }
-        }
-
-        function handleMouseMoveForTooltip(e) {
-            if (planetTooltip.classList.contains('active') && !isChangingDegree) {
-                const targetPlanet = e.target.closest('.planet');
-                // Only update position/keep visible if hovering over the *same* planet or the tooltip itself
-                if (targetPlanet && planetDegrees[targetPlanet.id] && e.target.closest('.planet') === document.querySelector('.planet.hovered-for-tooltip')) {
-                     showTooltip(targetPlanet);
-                } else {
-                     // If mouse moves off the current planet, hide the tooltip
-                     hideTooltip();
-                }
-            }
-        }
-
-
         function showTooltip(planetElement) {
+            // Remove 'hovered-for-tooltip' from any previously hovered planet
             document.querySelectorAll('.planet.hovered-for-tooltip').forEach(el => el.classList.remove('hovered-for-tooltip'));
+            // Add it to the current one
             planetElement.classList.add('hovered-for-tooltip');
 
             const t = translations[currentLanguage];
@@ -1633,23 +1633,6 @@
 
         // --- Sign/House Tooltip Functions ---
 
-        // Existing handleSignLabelMouseOver, handleSignLabelMouseOut, handleSignLabelMouseMove for desktop
-        // Add touch equivalents for mobile
-
-        function handleSignLabelTouchStart(e) {
-            e.preventDefault(); // Prevent default touch actions like zooming/scrolling
-            const signLabel = e.target.closest('.sign-label');
-            if (signLabel) {
-                // Simulate mouseover for touch
-                handleSignLabelMouseOver(e);
-            }
-        }
-
-        function handleSignLabelTouchEnd(e) {
-            // No specific action needed on touchend for now, as touchmove handles position
-            // and click outside will hide the tooltip.
-        }
-
         function handleSignLabelMouseOver(e) {
             const signLabel = e.target.closest('.sign-label');
             if (!signLabel) return;
@@ -1663,8 +1646,6 @@
             }
 
             const signInfo = signData[signName]; // Get English data structure
-            // const houseInfo = houseNumber ? houseData[houseNumber] : null; // No longer needed for keywords, etc.
-
             const t = translations[currentLanguage]; // Get current translations
 
             let content = '';
@@ -1698,11 +1679,12 @@
             signHouseTooltip.innerHTML = content;
             signHouseTooltip.classList.add('active');
 
-            // Pass either mouse event or touch event for positioning
-            positionSignHouseTooltip(e.touches ? e.touches[0] : e);
+            // Position tooltip
+            positionSignHouseTooltip(e.touches && e.touches[0] ? e.touches[0] : e);
         }
 
         function handleSignLabelMouseOut(e) {
+            // Check if relatedTarget is within the tooltip or a sign label itself
             const relatedTarget = e.relatedTarget;
             if (!relatedTarget || (!relatedTarget.closest('#sign-house-tooltip') && !relatedTarget.closest('.sign-label'))) {
                 hideSignHouseTooltip();
@@ -1710,12 +1692,10 @@
         }
 
         function handleSignLabelMouseMove(e) {
-            positionSignHouseTooltip(e.touches ? e.touches[0] : e);
+            positionSignHouseTooltip(e.touches && e.touches[0] ? e.touches[0] : e);
         }
 
         function positionSignHouseTooltip(event) {
-            const targetRect = event.target ? event.target.getBoundingClientRect() : { x: event.clientX, y: event.clientY, width: 0, height: 0 };
-
             let clientX = event.clientX;
             let clientY = event.clientY;
 
@@ -1744,7 +1724,6 @@
             signHouseTooltip.style.left = `${left}px`;
             signHouseTooltip.style.top = `${top}px`;
         }
-
 
         function hideSignHouseTooltip() {
             signHouseTooltip.classList.remove('active');
@@ -1838,6 +1817,7 @@
                 if (planetSymbolSpan) {
                     planetSymbolSpan.insertAdjacentElement('afterend', symbolSpan);
                 } else {
+                    // Fallback in case planet-symbol is missing (shouldn't happen)
                     planetElement.appendChild(symbolSpan);
                 }
             }
@@ -1894,15 +1874,17 @@
 
 
             document.getElementById('Lagna').querySelector('.planet-symbol').textContent = t.lagnaSymbol;
+            // Updated planet IDs to remove numeric suffixes in HTML for consistency with JS IDs
             document.getElementById('Sun').querySelector('.planet-symbol').textContent = t.sunSymbol;
             document.getElementById('Moon').querySelector('.planet-symbol').textContent = t.moonSymbol;
             document.getElementById('Mars').querySelector('.planet-symbol').textContent = t.marsSymbol;
             document.getElementById('Mercury').querySelector('.planet-symbol').textContent = t.mercurySymbol;
             document.getElementById('Jupiter').querySelector('.planet-symbol').textContent = t.jupiterSymbol;
-            document.getElementById('Venus').querySelector('.planet-symbol').textContent = t.venusSymbol;
-            document.getElementById('Saturn').querySelector('.planet-symbol').textContent = t.saturnSymbol;
-            document.getElementById('Rahu').querySelector('.planet-symbol').textContent = t.rahuSymbol;
-            document.getElementById('Ketu').querySelector('.planet-symbol').textContent = t.ketuSymbol;
+            document.getElementById('Ve').querySelector('.planet-symbol').textContent = t.venusSymbol; // Corrected ID
+            document.getElementById('Sa').querySelector('.planet-symbol').textContent = t.saturnSymbol; // Corrected ID
+            document.getElementById('Ra').querySelector('.planet-symbol').textContent = t.rahuSymbol;
+            document.getElementById('Ke').querySelector('.planet-symbol').textContent = t.ketuSymbol;
+
 
             document.getElementById('retrograde-checkbox').nextSibling.textContent = ` ${t.retrogradeCheckbox}`;
 
@@ -1926,7 +1908,7 @@
             }
 
             if (retrogradePanel.classList.contains('active') && selectedPlanetForRetrograde) {
-                panelPlanetName.textContent = `${t.planetColon} ${selectedPlanetForRetrorode.id}`;
+                panelPlanetName.textContent = `${t.planetColon} ${selectedPlanetForRetrograde.id}`;
             }
         }
 
@@ -1977,6 +1959,7 @@
         function resetChart() {
             document.querySelectorAll('.planets-container').forEach(container => {
                 Array.from(container.children).forEach(planetEl => {
+                    // Ensure planet IDs are correctly mapped for deletion
                     delete planetDegrees[planetEl.id];
                     updatePlanetDegreeDisplay(planetEl);
                     updateRetrogradeSymbol(planetEl);
@@ -1993,10 +1976,10 @@
             document.getElementById('Mars').querySelector('.planet-symbol').textContent = t.marsSymbol;
             document.getElementById('Mercury').querySelector('.planet-symbol').textContent = t.mercurySymbol;
             document.getElementById('Jupiter').querySelector('.planet-symbol').textContent = t.jupiterSymbol;
-            document.getElementById('Venus').querySelector('.planet-symbol').textContent = t.venusSymbol;
-            document.getElementById('Saturn').querySelector('.planet-symbol').textContent = t.saturnSymbol;
-            document.getElementById('Rahu').querySelector('.planet-symbol').textContent = t.rahuSymbol;
-            document.getElementById('Ketu').querySelector('.planet-symbol').textContent = t.ketuSymbol;
+            document.getElementById('Ve').querySelector('.planet-symbol').textContent = t.venusSymbol;
+            document.getElementById('Sa').querySelector('.planet-symbol').textContent = t.saturnSymbol;
+            document.getElementById('Ra').querySelector('.planet-symbol').textContent = t.rahuSymbol;
+            document.getElementById('Ke').querySelector('.planet-symbol').textContent = t.ketuSymbol;
 
             lagnaSign = null;
             resetAllPlanetDegrees();
@@ -2013,12 +1996,13 @@
         }
 
         function resetAllPlanetDegrees() {
-            for (const planetId in planetDegrees) {
-                delete planetDegrees[planetId];
-            }
+            // planetDegrees will be empty after chart clear, this ensures visual reset for bank planets
             document.querySelectorAll('#planet-bank .planet').forEach(planetEl => {
-                updatePlanetDegreeDisplay(planetEl);
-                updateRetrogradeSymbol(planetEl);
+                // Ensure there's no residual degree data if not in the map
+                if (!planetDegrees[planetEl.id]) {
+                    updatePlanetDegreeDisplay(planetEl);
+                    updateRetrogradeSymbol(planetEl);
+                }
             });
         }
 
