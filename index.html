@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <title>Vedic Astrology South Indian Chart</title>
     <style>
         /* Base styles for all devices */
@@ -18,7 +18,14 @@
             margin: 0;
             padding: 10px; /* Adjust padding for smaller screens */
             color: #fff; /* White Text */
-            /* overflow-x: hidden; Removed to allow browser scroll if needed */
+            /* FIX 3: Chrome Rendering Glitches */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            /* FIX 7: Samsung Device Quirks */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                     env(safe-area-inset-bottom) env(safe-area-inset-left);
+            /* FIX 4: Over-Scroll Interference - Initial state */
+            overscroll-behavior-y: auto; /* Default to auto, changed to 'none' during gesture */
         }
 
         .chart-title {
@@ -113,7 +120,8 @@
             position: relative;
             color: #000;
             /* CRITICAL for mobile drag-and-drop / custom touch handling */
-            touch-action: none;
+            /* FIX 1: Delayed Touch Response - touch-action: manipulation */
+            touch-action: manipulation;
             /* FIX 6: iOS Quirks - Disable touch callout */
             -webkit-touch-callout: none;
         }
@@ -136,6 +144,9 @@
             filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
             transform: scale(1.1) rotate(2deg);
             transition: transform 0.2s; /* Apply transition to the clone's transform */
+            /* FIX 2: Janky Drag Animation */
+            will-change: transform;
+            transform: translateZ(0); /* Force hardware acceleration */
         }
 
         .planet-symbol {
@@ -907,7 +918,7 @@
                 "keywords_Cancer": "पोषण, भावनात्मक, घर, अंतर्ज्ञान, सुरक्षात्मक, संवेदनशील",
                 "keywords_Leo": "रचनात्मकता, आत्म-अभिव्यक्ति, आत्मविश्वासी, उदार, नाटकीय, वफादार",
                 "keywords_Virgo": "विश्लेषण, सेवा, व्यावहारिक, पूर्णतावादी, स्वास्थ्य-सचेत, मेहनती",
-                "keywords_Libra": "संतुलन, सद्भाव, रिश्ते, न्याय, कूटनीतिक, सौंदर्य",
+                "keywords_Libra": "संतुलन, सद्भाव, रिश्ते, न्याय, कूटनीति, सौंदर्य",
                 "keywords_Scorpio": "परिवर्तन, तीव्रता, रहस्यमयी, शक्तिशाली, भावुक, खोजी",
                 "keywords_Sagittarius": "विस्तार, ज्ञान, साहसिक, आशावादी, दार्शनिक, स्वतंत्र आत्मा",
                 "keywords_Capricorn": "अनुशासन, महत्वाकांक्षा, जिम्मेदारी, संरचित, व्यावहारिक, धैर्यवान",
@@ -1011,7 +1022,7 @@
                 "keywords_house_9": "తండ్రి, గురువు, ఉన్నత విద్య, తత్వశాస్త్రం, సుదూర ప్రయాణాలు, అదృష్టం",
                 "keywords_house_10": "వృత్తి, ప్రజా ప్రతిష్ట, కీర్తి, హోదా, ఆశయం, విజయాలు",
                 "keywords_house_11": "లాభాలు, స్నేహితులు, కోరికలు, పెద్ద తోబుట్టువులు, ఆదాయం, ఆశలు",
-                "keywords_house_12": "నష్టాలు, వ్యయం, విదేశీ పరిష్కారం, ఆధ్యాత్మికత, విముక్తి, దాగి ఉన్న శత్రువులు"
+                "keywords_house_12": "నష్టాలు, వ్యయం, విదేశీ పరిష్కారం, ఆధ్యాత్మికత, విముक्ति, దాగి ఉన్న శత్రువులు"
             },
             "ta": {
                 "chartTitle": "ஊடாடும் தென் இந்திய வேத ஜோதிட விளக்கப்படம்",
@@ -1181,6 +1192,13 @@
 
             // Close button for retrograde panel
             retrogradePanel.querySelector('.close-button').addEventListener('click', hideRetrogradePanel);
+
+            // FIX 5: Inconsistent Touch Cancel - Visibility change listener
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isDragging) {
+                    cancelDrag();
+                }
+            });
         }
 
         // --- Mouse Event Handlers (Desktop) ---
@@ -1208,6 +1226,7 @@
                 hideTooltip();
                 hideSignHouseTooltip();
                 hideRetrogradePanel();
+                vibrateOnDrag(); // FIX 8: Haptic Feedback
             }
         }
 
@@ -1232,15 +1251,8 @@
             if (planetElement.parentElement.classList.contains('planets-container')) {
                 // Click on a planet in the chart for degree adjustment
                 e.preventDefault(); // Prevent text selection etc. for desktop degree adjust
-                isChangingDegree = true;
-                degreeChangePlanet = planetElement;
-                initialTouchY = e.clientY; // Use clientY for mouse
-                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
-
+                startDegreeAdjustment(planetElement, e.clientY); // Use the new function
                 document.addEventListener('mousemove', handleDegreeChangeMouseMove);
-                hideTooltip();
-                hideSignHouseTooltip();
-                hideRetrogradePanel();
             }
         }
 
@@ -1249,6 +1261,7 @@
                 isChangingDegree = false;
                 degreeChangePlanet = null;
                 document.removeEventListener('mousemove', handleDegreeChangeMouseMove);
+                document.documentElement.style.overscrollBehaviorY = 'auto'; // FIX 4: Reset overscroll
             }
         }
 
@@ -1269,24 +1282,6 @@
         }
 
         function handleMouseMove(e) {
-            // Mouse move for general tooltip hovering (not degree change)
-            // if (!isChangingDegree && !isMoving && !isDragging) { // Added isDragging
-            //     const planetElement = e.target.closest('.planet');
-            //     const signLabel = e.target.closest('.sign-label');
-
-            //     if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
-            //         showTooltip(planetElement);
-            //         hideSignHouseTooltip();
-            //     } else {
-            //         hideTooltip();
-            //     }
-
-            //     if (signLabel) {
-            //         handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
-            //     } else {
-            //         hideSignHouseTooltip();
-            //     }
-            // }
             // Optimized mousemove:
             if (isChangingDegree || isMoving || isDragging) return; // Don't show tooltips during active gestures
 
@@ -1341,6 +1336,7 @@
             hideRetrogradePanel();
             // FIX 4: Sticky Touch on Long Press - Re-enable scroll aggressively
             document.body.style.touchAction = '';
+            document.documentElement.style.overscrollBehaviorY = 'auto'; // FIX 4: Reset overscroll
         }
 
         function handleTouchStart(e) {
@@ -1388,11 +1384,7 @@
                         // If no significant movement, it's a long press for degree adjustment or tap for retrograde panel
                         if (touchedElement.parentElement.classList.contains('planets-container')) {
                             // If it's a planet in the chart, enable degree change
-                            isChangingDegree = true;
-                            degreeChangePlanet = touchedElement;
-                            initialTouchY = initialTouchYForMovement; // Store for degree calculations
-                            initialPlanetDegree = planetDegrees[touchedElement.id]?.degree || 0;
-                            showTooltip(touchedElement); // Show tooltip during degree change
+                            startDegreeAdjustment(touchedElement, e.touches[0].clientY); // Use new function
                             e.preventDefault(); // Prevent default scroll/zoom ONLY if degree adjust is initiating
                         }
                     }
@@ -1405,6 +1397,19 @@
             // Do NOT preventDefault here by default.
             // It will be called conditionally inside the setTimeout for specific gestures or in handleTouchMove
             // once a gesture (drag/degree adjust) is detected. This is crucial for allowing normal page scrolling for unhandled taps/swipes.
+        }
+
+        // FIX 6: Keyboard Pop-up Issues - Refactored start of degree adjustment
+        function startDegreeAdjustment(planetElement, initialY) {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => input.blur()); // Force-close any keyboards
+
+            isChangingDegree = true;
+            degreeChangePlanet = planetElement;
+            initialTouchY = initialY;
+            initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
+            showTooltip(planetElement); // Show tooltip during degree change
+            document.documentElement.style.overscrollBehaviorY = 'none'; // FIX 4: Block pull-to-refresh
         }
 
         function startMobileDrag(e, planetElement) {
@@ -1437,6 +1442,7 @@
 
             updateFloatingPlanetPosition(e.touches[0].clientX, e.touches[0].clientY);
             e.preventDefault(); // Prevent scrolling when a drag starts
+            vibrateOnDrag(); // FIX 8: Haptic Feedback
         }
 
 
@@ -1458,10 +1464,12 @@
             if (isChangingDegree && degreeChangePlanet) {
                 // FIX 3: Scroll Interference During Drag - Block scroll during degree adjust
                 e.preventDefault();
+                document.documentElement.style.overscrollBehaviorY = 'none'; // FIX 4: Block Chrome's pull-to-refresh
                 handleDegreeChangeMouseMove({ clientY: currentTouchY }); // Simulate mouse event for degree change
             } else if (isDragging) { // If a custom drag is active (isMoving and isDragging are now unified)
                 // FIX 3: Scroll Interference During Drag - Block scroll during drag
                 e.preventDefault();
+                document.documentElement.style.overscrollBehaviorY = 'none'; // FIX 4: Block Chrome's pull-to-refresh
                 updateFloatingPlanetPosition(currentTouchX, currentTouchY);
                 // Highlight potential drop targets
                 document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); // Clear all
@@ -1514,6 +1522,7 @@
 
             // FIX 4: Sticky Touch on Long Press - Reset touch state aggressively
             document.body.style.touchAction = '';
+            document.documentElement.style.overscrollBehaviorY = 'auto'; // FIX 4: Reset overscroll
 
             // If a degree change was active, clear it and hide tooltip
             if (isChangingDegree) {
@@ -1672,6 +1681,9 @@
             }
             updatePlanetDegreeDisplay(planetToMove);
             updateRetrogradeSymbol(planetToMove);
+
+            // Ensure Nakshatra and Pada are displayed immediately after drop
+            showTooltip(planetToMove); // Re-show tooltip for the dropped planet
         }
 
         function dropToBank(e) {
@@ -1732,7 +1744,9 @@
             const t = translations[currentLanguage];
 
             const planetData = planetDegrees[planetElement.id];
-            if (!planetData) {
+            if (!planetData || planetData.sign === undefined || planetData.degree === undefined) {
+                 // If no data (e.g., in bank), hide tooltip.
+                 // Added checks for sign and degree presence explicitly.
                 hideTooltip();
                 return;
             }
@@ -1742,7 +1756,11 @@
             const translatedSign = t[`sign_${planetData.sign}`] || planetData.sign;
             const translatedNakshatra = t[`nak_${nakData.nakshatra.name}`] || nakData.nakshatra.name;
 
-            let tooltipContent = `${planetData.degree.toFixed(2)}${t.tooltipDegreeSign} ${translatedSign} | ${translatedNakshatra} – Pada ${nakData.pada}`;
+            let tooltipContent = `${planetData.degree.toFixed(2)}${t.tooltipDegreeSign} ${translatedSign}`;
+            // Only add Nakshatra/Pada if available
+            if (nakData.nakshatra && nakData.nakshatra.name !== 'N/A') {
+                tooltipContent += ` | ${translatedNakshatra} – Pada ${nakData.pada}`;
+            }
             if (planetData.isRetrograde) {
                 tooltipContent += ` ${t.tooltipRetrograde}`;
             }
@@ -1895,6 +1913,11 @@
         function showRetrogradePanel(planetElement) {
             selectedPlanetForRetrograde = planetElement;
             const planetData = planetDegrees[planetElement.id];
+
+            // If planet is in the bank, it has no degree, so don't show retrograde panel
+            if (!planetData || planetData.degree === undefined) {
+                return;
+            }
 
             const t = translations[currentLanguage];
             panelPlanetName.textContent = `${t.planetColon} ${planetElement.id}`;
@@ -2060,7 +2083,11 @@
         }
 
         function getNakshatraAndPada(sign, degree) {
-            const nakshatraLengthDegrees = 13.333333333;
+            if (sign === undefined || degree === undefined || degree < 0 || degree > 30) {
+                return { nakshatra: { name: 'N/A' }, pada: '-' };
+            }
+
+            const nakshatraLengthDegrees = 13 + (20/60); // 13 degrees 20 minutes
             const padaLengthDegrees = nakshatraLengthDegrees / 4;
 
             const signIndex = signs.indexOf(sign);
@@ -2068,16 +2095,23 @@
                 return { nakshatra: { name: 'N/A' }, pada: '-' };
             }
 
+            // Calculate total degrees from the start of Aries (0 degrees)
             const totalDegrees = (signIndex * 30) + degree;
 
-            let nakshatraNumber = Math.floor(totalDegrees / nakshatraLengthDegrees);
+            // Determine which nakshatra it falls into
+            let nakshatraIndex = Math.floor(totalDegrees / nakshatraLengthDegrees);
 
-            if (nakshatraNumber >= nakshatras.length) {
-                nakshatraNumber = nakshatras.length - 1;
+            // Edge case: If it's exactly 30 degrees of Pisces, it might fall slightly over
+            if (nakshatraIndex >= nakshatras.length) {
+                nakshatraIndex = nakshatras.length - 1; // Cap to the last nakshatra
             }
 
-            const foundNakshatra = nakshatras[nakshatraNumber];
+            const foundNakshatra = nakshatras[nakshatraIndex];
+
+            // Calculate degrees within the current nakshatra
             const degreesIntoCurrentNakshatra = totalDegrees % nakshatraLengthDegrees;
+
+            // Determine the pada
             const pada = Math.floor(degreesIntoCurrentNakshatra / padaLengthDegrees) + 1;
 
             return {
@@ -2085,6 +2119,7 @@
                 pada: pada
             };
         }
+
 
         function updatePlanetDegreeDisplay(planetElement) {
             let degreeDisplay = planetElement.querySelector('.planet-degree-display');
@@ -2199,6 +2234,13 @@
                         updateRetrogradeSymbol(planetElement);
                     }
                 }
+            }
+        }
+
+        // FIX 8: Haptic Feedback Function
+        function vibrateOnDrag() {
+            if (navigator.vibrate) {
+                navigator.vibrate(10); // 10ms micro-vibration
             }
         }
     </script>
