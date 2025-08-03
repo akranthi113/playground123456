@@ -6,273 +6,258 @@
     <title>Vedic Astrology South Indian Chart</title>
     <style>
         * {
-            box-sizing: border-box; /* [cite: 1] */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* [cite: 2] */
-            transition: background-color 0.3s ease, color 0.3s ease; /* [cite: 2] */
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         body {
-            background-color: #121212; /* [cite: 3] */
-            /* Dark background */
+            background-color: #121212; /* Dark background */
             margin: 0;
-            padding: 20px; /* [cite: 4] */
-            color: #e0e0e0; /* Light text [cite: 5] */
+            padding: 20px;
+            color: #e0e0e0; /* Light text */
         }
 
         .chart-title {
-            text-align: center; /* [cite: 6] */
-            font-size: 1.7em; /* [cite: 6] */
+            text-align: center;
+            font-size: 1.7em;
             font-weight: bold;
             margin-bottom: 20px;
             color: #bdbdbd; /* Lighter title */
         }
 
         .chart-container {
-            display: grid; /* [cite: 7] */
-            grid-template-columns: repeat(4, 1fr); /* [cite: 7] */
-            grid-template-rows: repeat(4, 85px); /* [cite: 7] */
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 85px);
             gap: 1px;
             width: 360px;
             height: 360px;
             margin: auto;
-            border: 1px solid #444; /* [cite: 7] */
-            /* Light border */
-            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4); /* [cite: 8] */
+            border: 1px solid #444; /* Light border */
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
         }
 
         .chart-box {
-            border: 1px solid #333; /* [cite: 9] */
-            /* Darker inner borders */
+            border: 1px solid #333; /* Darker inner borders */
             position: relative;
-            background-color: #242424; /* [cite: 10] */
-            /* Dark box background */
-            display: flex; /* [cite: 11] */
-            flex-direction: column; /* [cite: 11] */
-            align-items: center; /* [cite: 12] */
+            background-color: #242424; /* Dark box background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: flex-start;
             text-align: center;
             padding: 3px;
-            overflow: hidden; /* [cite: 12] */
+            overflow: hidden;
         }
 
         .sign-label {
-            position: absolute; /* [cite: 13] */
-            top: 2px; /* [cite: 14] */
-            left: 2px; /* [cite: 14] */
+            position: absolute;
+            top: 2px;
+            left: 2px;
             font-size: 0.7em;
-            color: #aaa; /* Faded light color [cite: 14] */
-            font-weight: normal; /* [cite: 14] */
+            color: #aaa; /* Faded light color */
+            font-weight: normal;
         }
 
         .house-label {
-            position: absolute; /* [cite: 15] */
-            bottom: 2px; /* [cite: 16] */
-            right: 2px; /* [cite: 16] */
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
             font-size: 0.75em;
-            color: #64b5f6; /* Blue for house numbers [cite: 16] */
-            font-weight: bold; /* [cite: 16] */
+            color: #64b5f6; /* Blue for house numbers */
+            font-weight: bold;
         }
 
         .planet {
-            cursor: grab; /* [cite: 17] */
-            /* Default cursor for drag */
-            margin: 1px; /* [cite: 18] */
-            font-size: 0.8em; /* [cite: 19] */
+            cursor: grab; /* Default cursor for drag */
+            margin: 1px;
+            font-size: 0.8em;
             padding: 2px 4px;
             border-radius: 3px;
             display: flex;
-            flex-direction: column; /* [cite: 20] */
-            /* To stack the symbol and degree */
-            align-items: center; /* [cite: 21] */
-            white-space: nowrap; /* [cite: 21] */
+            flex-direction: column; /* To stack the symbol and degree */
+            align-items: center;
+            white-space: nowrap;
             user-select: none;
             transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
-            box-shadow: 0.5px 0.5px 2px rgba(255,255,255,0.1); /* [cite: 22] */
-            /* Subtle white shadow */
+            box-shadow: 0.5px 0.5px 2px rgba(255,255,255,0.1); /* Subtle white shadow */
             position: relative;
-            color: #121212; /* [cite: 23] */
-            /* Black text for contrast */
+            color: #121212; /* Black text for contrast */
         }
 
         .planet-symbol {
-            font-weight: bold; /* [cite: 24] */
-            font-size: 1em; /* [cite: 24] */
+            font-weight: bold;
+            font-size: 1em;
         }
 
         .planet-degree-display { /* This will only show degree now */
-            font-size: 0.7em; /* [cite: 25] */
-            color: #121212; /* [cite: 25] */
+            font-size: 0.7em;
+            color: #121212;
             margin-top: 1px;
         }
 
         .Lagna {
-            background-color: #e0e0e0; /* [cite: 26] */
-            color: #121212; /* [cite: 26] */
+            background-color: #e0e0e0;
+            color: #121212;
             font-weight: bold;
         }
 
         .planet:hover {
-            transform: translateY(-1px); /* [cite: 27] */
+            transform: translateY(-1px);
         }
 
         .planet:active {
-            cursor: grabbing; /* [cite: 28] */
+            cursor: grabbing;
         }
 
         /* Planet specific colors */
-        .Sun { background-color: #ffd700; /* Gold [cite: 29] */ }
-        .Moon { background-color: #e0e0e0; /* Light Gray [cite: 30] */ }
-        .Mars { background-color: #ff5252; /* Red [cite: 31] */ }
-        .Mercury { background-color: #00e676; /* Green [cite: 32] */ }
-        .Jupiter { background-color: #ffb300; /* Amber [cite: 33] */ }
-        .Venus { background-color: #e91e63; /* Pink [cite: 34] */ }
-        .Saturn { background-color: #7986cb; /* Indigo [cite: 35] */ }
-        .Rahu { background-color: #9e9e9e; /* Gray [cite: 36] */ }
-        .Ketu { background-color: #616161; /* Dark Gray [cite: 37] */ }
+        .Sun { background-color: #ffd700; } /* Gold */
+        .Moon { background-color: #e0e0e0; } /* Light Gray */
+        .Mars { background-color: #ff5252; } /* Red */
+        .Mercury { background-color: #00e676; } /* Green */
+        .Jupiter { background-color: #ffb300; } /* Amber */
+        .Venus { background-color: #e91e63; } /* Pink */
+        .Saturn { background-color: #7986cb; } /* Indigo */
+        .Rahu { background-color: #9e9e9e; } /* Gray */
+        .Ketu { background-color: #616161; } /* Dark Gray */
 
         .planets-container {
-            display: flex; /* [cite: 38] */
-            flex-wrap: wrap; /* [cite: 38] */
-            justify-content: center; /* [cite: 38] */
-            align-items: flex-start; /* [cite: 38] */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
             width: 100%;
             min-height: 20px;
             margin-top: 12px;
-            padding-top: 3px; /* [cite: 39] */
+            padding-top: 3px;
         }
 
-        /* Highlight for the chart-box when dragging over it */
-        .chart-box.drag-over {
-            background-color: #1f3a5f; /* Dark blue highlight [cite: 40] */
-            border: 1px dashed #64b5f6; /* [cite: 41] */
-        }
-
-        /* Highlight for the planet-bank when dragging over it */
-        #planet-bank.drag-over {
-            background-color: #1f3a5f; /* Dark blue highlight [cite: 40] */
-            border: 1px dashed #64b5f6; /* [cite: 41] */
+        .planets-container.drag-over {
+            background-color: #1f3a5f; /* Dark blue highlight */
+            border: 1px dashed #64b5f6;
         }
 
         .controls {
-            text-align: center; /* [cite: 42] */
-            margin-top: 25px; /* [cite: 42] */
+            text-align: center;
+            margin-top: 25px;
             padding: 15px;
             border: 1px solid #333;
             border-radius: 8px;
             background-color: #1e1e1e;
             max-width: 600px;
             margin-left: auto;
-            margin-right: auto; /* [cite: 43] */
-            box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.4); /* [cite: 43] */
+            margin-right: auto;
+            box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.4);
         }
 
         .controls div {
-            margin-bottom: 10px; /* [cite: 44] */
+            margin-bottom: 10px;
         }
 
         .controls label,
         .controls span {
-            font-weight: 500; /* [cite: 45] */
-            margin-right: 8px; /* [cite: 45] */
+            font-weight: 500;
+            margin-right: 8px;
         }
 
         button {
-            padding: 7px 14px; /* [cite: 46] */
-            font-size: 0.95em; /* [cite: 46] */
+            padding: 7px 14px;
+            font-size: 0.95em;
             margin: 4px;
             border-radius: 4px;
             border: 1px solid #64b5f6;
             background-color: transparent;
             color: #64b5f6;
-            cursor: pointer; /* [cite: 47] */
-            transition: background-color 0.3s ease, color 0.3s ease; /* [cite: 47] */
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         button:hover {
-            background-color: #64b5f6; /* [cite: 48] */
-            color: #121212; /* [cite: 48] */
+            background-color: #64b5f6;
+            color: #121212;
         }
 
         button.secondary {
-            border-color: #aaa; /* [cite: 49] */
-            color: #aaa; /* [cite: 49] */
+            border-color: #aaa;
+            color: #aaa;
         }
 
         button.secondary:hover {
-            background-color: #aaa; /* [cite: 50] */
-            color: #121212; /* [cite: 50] */
+            background-color: #aaa;
+            color: #121212;
         }
 
         #planet-bank {
-            border: 1px dashed #444; /* [cite: 51] */
-            padding: 8px; /* [cite: 51] */
+            border: 1px dashed #444;
+            padding: 8px;
             min-height: 35px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
             margin-top: 8px;
-            background-color: #1e1e1e; /* [cite: 52] */
+            background-color: #1e1e1e;
         }
 
         /* Styles for the tooltip */
         .planet-tooltip {
-            position: fixed; /* [cite: 53] */
-            background-color: #333; /* Dark background for tooltip [cite: 53] */
-            color: #fff; /* White text [cite: 54] */
+            position: fixed;
+            background-color: #333; /* Dark background for tooltip */
+            color: #fff; /* White text */
             padding: 5px 8px;
-            border-radius: 4px; /* [cite: 55] */
-            font-size: 0.8em; /* [cite: 55] */
+            border-radius: 4px;
+            font-size: 0.8em;
             white-space: nowrap;
             z-index: 100;
             pointer-events: none; /* Make it transparent to mouse events */
-            opacity: 0; /* [cite: 56] */
-            transition: opacity 0.2s ease-in-out; /* [cite: 56] */
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .planet-tooltip.active {
-            opacity: 1; /* [cite: 57] */
+            opacity: 1;
         }
 
         /* Styles for the Retrograde Panel */
         #retrograde-panel {
-            position: fixed; /* [cite: 58] */
-            background-color: #2a2a2a; /* [cite: 58] */
+            position: fixed;
+            background-color: #2a2a2a;
             border: 1px solid #64b5f6;
             border-radius: 5px;
             padding: 10px 15px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 101; /* Higher than tooltip [cite: 59] */
-            display: none; /* Hidden by default [cite: 60] */
+            z-index: 101; /* Higher than tooltip */
+            display: none; /* Hidden by default */
             flex-direction: column;
-            gap: 8px; /* [cite: 61] */
+            gap: 8px;
         }
         #retrograde-panel.active {
-            display: flex; /* [cite: 62] */
+            display: flex;
         }
         #retrograde-panel label {
-            display: flex; /* [cite: 63] */
-            align-items: center; /* [cite: 63] */
+            display: flex;
+            align-items: center;
             gap: 8px;
             cursor: pointer;
             color: #e0e0e0;
-            font-size: 0.9em; /* [cite: 64] */
+            font-size: 0.9em;
         }
         #retrograde-panel input[type="checkbox"] {
-            transform: scale(1.2); /* Make checkbox slightly larger [cite: 65] */
-            cursor: pointer; /* [cite: 66] */
+            transform: scale(1.2); /* Make checkbox slightly larger */
+            cursor: pointer;
         }
         #retrograde-panel .panel-planet-name {
-            font-weight: bold; /* [cite: 67] */
-            color: #ffcc80; /* [cite: 67] */
+            font-weight: bold;
+            color: #ffcc80;
             font-size: 1.1em;
         }
 
         /* Style for retrograde symbol (R) next to planet symbol */
         .planet.retrograde .retrograde-symbol {
-            font-size: 0.9em; /* [cite: 68] */
-            color: #ff5252; /* Red for retrograde [cite: 68] */
-            font-weight: bold; /* [cite: 69] */
+            font-size: 0.9em;
+            color: #ff5252; /* Red for retrograde */
+            font-weight: bold;
             margin-left: 2px;
             vertical-align: super; /* Position slightly above */
         }
@@ -378,357 +363,348 @@
     </div>
 
     <script>
-        const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]; /* [cite: 80] */
+        const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+
         const nakshatras = [
-            { name: 'Ashwini', range: '0° – 13°20′ Aries', ruler: 'Ketu', symbol: 'Horse Head', deity: 'Ashwini Kumaras' }, /* [cite: 81] */
-            { name: 'Bharani', range: '13°20′ – 26°40′ Aries', ruler: 'Venus', symbol: 'Yoni', deity: 'Yama' }, /* [cite: 81] */
-            { name: 'Krittika', range: '26°40′ Aries – 10° Taurus', ruler: 'Sun', symbol: 'Razor/Axe', deity: 'Agni' }, /* [cite: 81] */
-            { name: 'Rohini', range: '10° – 23°20′ Taurus', ruler: 'Moon', symbol: 'Cart/Chariot', deity: 'Brahma' }, /* [cite: 82] */
-            { name: 'Mrigashira', range: '23°20′ Taurus – 6°40′ Gemini', ruler: 'Mars', symbol: 'Deer Head', deity: 'Soma (Moon)' }, /* [cite: 82] */
-            { name: 'Ardra', range: '6°40′ – 20° Gemini', ruler: 'Rahu', symbol: 'Teardrop/Diamond', deity: 'Rudra (Shiva)' }, /* [cite: 82] */
-            { name: 'Punarvasu', range: '20° Gemini – 3°20′ Cancer', ruler: 'Jupiter', symbol: 'Quiver of Arrows', deity: 'Aditi' }, /* [cite: 82] */
-            { name: 'Pushya', range: '3°20′ – 16°40′ Cancer', ruler: 'Saturn', symbol: 'Cow Udder', deity: 'Brihaspati (Jupiter)' }, /* [cite: 83] */
-            { name: 'Ashlesha', range: '16°40′ – 30° Cancer', ruler: 'Mercury', symbol: 'Coiled Serpent', deity: 'Nagas (Serpents)' }, /* [cite: 83] */
-            { name: 'Magha', range: '0° – 13°20′ Leo', ruler: 'Ketu', symbol: 'Royal Throne', deity: 'Pitri (Ancestors)' }, /* [cite: 83] */
-            { name: 'Purva Phalguni', range: '13°20′ – 26°40′ Leo', ruler: 'Venus', symbol: 'Front Legs of Bed', deity: 'Bhaga (God of Wealth)' }, /* [cite: 84] */
-            { name: 'Uttara Phalguni', range: '26°40′ Leo – 10° Virgo', ruler: 'Sun', symbol: 'Back Legs of Bed', deity: 'Aryaman' }, /* [cite: 84] */
-            { name: 'Hasta', range: '10° – 23°20′ Virgo', ruler: 'Moon', symbol: 'Hand', deity: 'Savitar (Sun God)' }, /* [cite: 84] */
-            { name: 'Chitra', range: '23°20′ Virgo – 6°40′ Libra', ruler: 'Mars', symbol: 'Pearl', deity: 'Vishwakarma' }, /* [cite: 84] */
-            { name: 'Swati', range: '6°40′ – 20° Libra', ruler: 'Rahu', symbol: 'Coral/Sword', deity: 'Vayu (Wind God)' }, /* [cite: 85] */
-            { name: 'Vishakha', range: '20° Libra – 3°20′ Scorpio', ruler: 'Jupiter', symbol: 'Triumphal Arch', deity: 'Indragni' }, /* [cite: 85] */
-            { name: 'Anuradha', range: '3°20′ – 16°40′ Scorpio', ruler: 'Saturn', symbol: 'Lotus', deity: 'Mitra (Sun God)' }, /* [cite: 85] */
-            { name: 'Jyeshtha', range: '16°40′ – 30° Scorpio', ruler: 'Mercury', symbol: 'Earring/Umbrella', deity: 'Indra' }, /* [cite: 86] */
-            { name: 'Moola', range: '0° – 13°20′ Sagittarius', ruler: 'Ketu', symbol: 'Root', deity: 'Nirriti (Goddess of Calamity)' }, /* [cite: 86] */
-            { name: 'Purva Ashadha', range: '13°20′ – 26°40′ Sagittarius', ruler: 'Venus', symbol: 'Elephant Tusk/Fan', deity: 'Apah (Water Goddess)' }, /* [cite: 86] */
-            { name: 'Uttara Ashadha', range: '26°40′ Sagittarius – 10° Capricorn', ruler: 'Sun', symbol: 'Elephant Tusk/Plank', deity: 'Vishvadevas' }, /* [cite: 86] */
-            { name: 'Shravana', range: '10° – 23°20′ Capricorn', ruler: 'Moon', symbol: 'Ear', deity: 'Vishnu' }, /* [cite: 87] */
-            { name: 'Dhanishta', range: '23°20′ Capricorn – 6°40′ Aquarius', ruler: 'Mars', symbol: 'Musical Drum', deity: 'Vasu (Gods of Light)' }, /* [cite: 87] */
-            { name: 'Shatabhisha', range: '6°40′ – 20° Aquarius', ruler: 'Rahu', symbol: '100 Physicians/Stars', deity: 'Varuna (God of Cosmic Law)' }, /* [cite: 87] */
-            { name: 'Purva Bhadrapada', range: '20° Aquarius – 3°20′ Pisces', ruler: 'Jupiter', symbol: 'Front Legs of Funeral Cot', deity: 'Aja Ekapad' }, /* [cite: 88] */
-            { name: 'Uttara Bhadrapada', range: '3°20′ – 16°40′ Pisces', ruler: 'Saturn', symbol: 'Back Legs of Funeral Cot', deity: 'Ahir Bhudhanya' }, /* [cite: 88] */
-            { name: 'Revati', range: '16°40′ – 30° Pisces', ruler: 'Mercury', symbol: 'Drum/Fish', deity: 'Pushan (Nourishment)' } /* [cite: 88] */
+            { name: 'Ashwini', range: '0° – 13°20′ Aries', ruler: 'Ketu', symbol: 'Horse Head', deity: 'Ashwini Kumaras' },
+            { name: 'Bharani', range: '13°20′ – 26°40′ Aries', ruler: 'Venus', symbol: 'Yoni', deity: 'Yama' },
+            { name: 'Krittika', range: '26°40′ Aries – 10° Taurus', ruler: 'Sun', symbol: 'Razor/Axe', deity: 'Agni' },
+            { name: 'Rohini', range: '10° – 23°20′ Taurus', ruler: 'Moon', symbol: 'Cart/Chariot', deity: 'Brahma' },
+            { name: 'Mrigashira', range: '23°20′ Taurus – 6°40′ Gemini', ruler: 'Mars', symbol: 'Deer Head', deity: 'Soma (Moon)' },
+            { name: 'Ardra', range: '6°40′ – 20° Gemini', ruler: 'Rahu', symbol: 'Teardrop/Diamond', deity: 'Rudra (Shiva)' },
+            { name: 'Punarvasu', range: '20° Gemini – 3°20′ Cancer', ruler: 'Jupiter', symbol: 'Quiver of Arrows', deity: 'Aditi' },
+            { name: 'Pushya', range: '3°20′ – 16°40′ Cancer', ruler: 'Saturn', symbol: 'Cow Udder', deity: 'Brihaspati (Jupiter)' },
+            { name: 'Ashlesha', range: '16°40′ – 30° Cancer', ruler: 'Mercury', symbol: 'Coiled Serpent', deity: 'Nagas (Serpents)' },
+            { name: 'Magha', range: '0° – 13°20′ Leo', ruler: 'Ketu', symbol: 'Royal Throne', deity: 'Pitri (Ancestors)' },
+            { name: 'Purva Phalguni', range: '13°20′ – 26°40′ Leo', ruler: 'Venus', symbol: 'Front Legs of Bed', deity: 'Bhaga (God of Wealth)' },
+            { name: 'Uttara Phalguni', range: '26°40′ Leo – 10° Virgo', ruler: 'Sun', symbol: 'Back Legs of Bed', deity: 'Aryaman' },
+            { name: 'Hasta', range: '10° – 23°20′ Virgo', ruler: 'Moon', symbol: 'Hand', deity: 'Savitar (Sun God)' },
+            { name: 'Chitra', range: '23°20′ Virgo – 6°40′ Libra', ruler: 'Mars', symbol: 'Pearl', deity: 'Vishwakarma' },
+            { name: 'Swati', range: '6°40′ – 20° Libra', ruler: 'Rahu', symbol: 'Coral/Sword', deity: 'Vayu (Wind God)' },
+            { name: 'Vishakha', range: '20° Libra – 3°20′ Scorpio', ruler: 'Jupiter', symbol: 'Triumphal Arch', deity: 'Indragni' },
+            { name: 'Anuradha', range: '3°20′ – 16°40′ Scorpio', ruler: 'Saturn', symbol: 'Lotus', deity: 'Mitra (Sun God)' },
+            { name: 'Jyeshtha', range: '16°40′ – 30° Scorpio', ruler: 'Mercury', symbol: 'Earring/Umbrella', deity: 'Indra' },
+            { name: 'Moola', range: '0° – 13°20′ Sagittarius', ruler: 'Ketu', symbol: 'Root', deity: 'Nirriti (Goddess of Calamity)' },
+            { name: 'Purva Ashadha', range: '13°20′ – 26°40′ Sagittarius', ruler: 'Venus', symbol: 'Elephant Tusk/Fan', deity: 'Apah (Water Goddess)' },
+            { name: 'Uttara Ashadha', range: '26°40′ Sagittarius – 10° Capricorn', ruler: 'Sun', symbol: 'Elephant Tusk/Plank', deity: 'Vishvadevas' },
+            { name: 'Shravana', range: '10° – 23°20′ Capricorn', ruler: 'Moon', symbol: 'Ear', deity: 'Vishnu' },
+            { name: 'Dhanishta', range: '23°20′ Capricorn – 6°40′ Aquarius', ruler: 'Mars', symbol: 'Musical Drum', deity: 'Vasu (Gods of Light)' },
+            { name: 'Shatabhisha', range: '6°40′ – 20° Aquarius', ruler: 'Rahu', symbol: '100 Physicians/Stars', deity: 'Varuna (God of Cosmic Law)' },
+            { name: 'Purva Bhadrapada', range: '20° Aquarius – 3°20′ Pisces', ruler: 'Jupiter', symbol: 'Front Legs of Funeral Cot', deity: 'Aja Ekapad' },
+            { name: 'Uttara Bhadrapada', range: '3°20′ – 16°40′ Pisces', ruler: 'Saturn', symbol: 'Back Legs of Funeral Cot', deity: 'Ahir Bhudhanya' },
+            { name: 'Revati', range: '16°40′ – 30° Pisces', ruler: 'Mercury', symbol: 'Drum/Fish', deity: 'Pushan (Nourishment)' }
         ];
-        let draggedPlanetId = null; /* [cite: 89] */
-        const planetDegrees = {}; // Stores { sign: "...", degree: #, isRetrograde: boolean } /* [cite: 89] */
-        let initialPlanetBankHTML = ''; /* [cite: 89] */
-        let lagnaSign = null; /* [cite: 90] */
+
+        let draggedPlanetId = null;
+        const planetDegrees = {}; // Stores { sign: "...", degree: #, isRetrograde: boolean }
+        let initialPlanetBankHTML = '';
+        let lagnaSign = null;
 
         let isChangingDegree = false;
         let degreeChangePlanet = null;
         let initialMouseY = 0;
-        let initialPlanetDegree = 0; /* [cite: 90] */
-        const planetTooltip = document.getElementById('planet-tooltip'); /* [cite: 91] */
-        const retrogradePanel = document.getElementById('retrograde-panel'); /* [cite: 91] */
-        const retrogradeCheckbox = document.getElementById('retrograde-checkbox'); /* [cite: 91] */
-        const panelPlanetName = retrogradePanel.querySelector('.panel-planet-name'); /* [cite: 91] */
-        let selectedPlanetForRetrograde = null; /* [cite: 91] */
-        // Stores the planet element being edited for retrograde
+        let initialPlanetDegree = 0;
+
+        const planetTooltip = document.getElementById('planet-tooltip');
+        const retrogradePanel = document.getElementById('retrograde-panel');
+        const retrogradeCheckbox = document.getElementById('retrograde-checkbox');
+        const panelPlanetName = retrogradePanel.querySelector('.panel-planet-name');
+        let selectedPlanetForRetrograde = null; // Stores the planet element being edited for retrograde
 
         document.addEventListener('DOMContentLoaded', () => {
-            initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML; /* [cite: 92] */
-            attachDelegatedListeners(); /* [cite: 92] */
-            updateHouseNumbers(); /* [cite: 92] */
+            initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML;
+            attachDelegatedListeners();
+            updateHouseNumbers();
         });
-
+        
         function attachDelegatedListeners() {
-            document.addEventListener('dragstart', handleDragStart); /* [cite: 93] */
-            document.addEventListener('dragend', handleDragEnd); /* [cite: 101] */
-            document.addEventListener('mousedown', handleMouseDown); /* [cite: 93] */
-            document.addEventListener('mouseup', handleMouseUp); /*  */
-            document.addEventListener('dblclick', handleDblClick); /*  */
-            document.addEventListener('mousemove', handleMouseMoveForTooltip); /*  */
+            document.addEventListener('dragstart', handleDragStart);
+            document.addEventListener('dragend', handleDragEnd);
+            document.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('dblclick', handleDblClick);
+            document.addEventListener('mousemove', handleMouseMoveForTooltip);
 
-            // MODIFICATION START: Attach drag/drop listeners to .chart-box[data-sign]
-            document.querySelectorAll('.chart-box[data-sign]').forEach(box => {
-                box.addEventListener('dragover', allowDrop);
-                box.addEventListener('drop', dropToChart);
-                box.addEventListener('dragleave', removeDragOverHighlight);
-                
-                // Keep mouseover/mouseout/click on the planets-container for tooltips/retrograde panel
-                // as they are specifically about the planets *inside* the container.
-                box.querySelector('.planets-container').addEventListener('mouseover', handleContainerMouseOver); /*  */
-                box.querySelector('.planets-container').addEventListener('mouseout', handleContainerMouseOut); /*  */
-                box.querySelector('.planets-container').addEventListener('click', handlePlanetClick); /* [cite: 95] */
+            document.querySelectorAll('.planets-container').forEach(container => {
+                container.addEventListener('dragover', allowDrop);
+                container.addEventListener('drop', dropToChart);
+                container.addEventListener('dragleave', removeDragOverHighlight);
+                container.addEventListener('mouseover', handleContainerMouseOver);
+                container.addEventListener('mouseout', handleContainerMouseOut);
+                container.addEventListener('click', handlePlanetClick); // New: for retrograde panel
             });
-            // MODIFICATION END
 
-            const planetBank = document.getElementById('planet-bank'); /* [cite: 96] */
-            planetBank.addEventListener('dragover', allowDrop); /* [cite: 96] */
-            planetBank.addEventListener('drop', dropToBank); /* [cite: 96] */
-            planetBank.addEventListener('dragleave', removeDragOverHighlight); /* [cite: 96] */
+            const planetBank = document.getElementById('planet-bank');
+            planetBank.addEventListener('dragover', allowDrop);
+            planetBank.addEventListener('drop', dropToBank);
+            planetBank.addEventListener('dragleave', removeDragOverHighlight);
+            
             // Listener for the retrograde checkbox
-            retrogradeCheckbox.addEventListener('change', toggleRetrograde); /* [cite: 97] */
+            retrogradeCheckbox.addEventListener('change', toggleRetrograde);
+
             // Click anywhere outside the panel to close it
-            document.addEventListener('click', handleOutsideClick); /* [cite: 98] */
+            document.addEventListener('click', handleOutsideClick);
         }
 
         // --- Drag & Drop Handlers ---
         
         function handleDragStart(e) {
-            const planetElement = e.target.closest('.planet'); /* [cite: 99] */
+            const planetElement = e.target.closest('.planet');
             if (planetElement) {
-                draggedPlanetId = planetElement.id; /* [cite: 100] */
-                e.dataTransfer.setData('text/plain', draggedPlanetId); /* [cite: 100] */
-                planetElement.style.opacity = '0.5'; /* [cite: 100] */
-                hideTooltip(); /* [cite: 100] */
-                hideRetrogradePanel(); // Hide panel when dragging starts /* [cite: 100] */
+                draggedPlanetId = planetElement.id;
+                e.dataTransfer.setData('text/plain', draggedPlanetId);
+                planetElement.style.opacity = '0.5';
+                hideTooltip();
+                hideRetrogradePanel(); // Hide panel when dragging starts
             }
         }
 
         function handleDragEnd(e) {
-            const planetElement = e.target.closest('.planet'); /* [cite: 102] */
+            const planetElement = e.target.closest('.planet');
             if (planetElement) {
-                planetElement.style.opacity = '1'; /* [cite: 102] */
-                draggedPlanetId = null; /* [cite: 103] */
+                planetElement.style.opacity = '1';
+                draggedPlanetId = null;
             }
         }
 
         function allowDrop(e) {
-            e.preventDefault(); /* [cite: 103] */
-            // MODIFICATION START: Look for the chart-box or planet-bank
-            let targetElement = e.target.closest('.chart-box[data-sign]') || (e.target.id === 'planet-bank' ? e.target : e.target.closest('#planet-bank'));
-            // MODIFICATION END
+            e.preventDefault();
+            let targetElement = e.target.classList.contains('planets-container') || e.target.id === 'planet-bank' ? e.target : e.target.closest('.planets-container') || e.target.closest('#planet-bank');
             if (targetElement) {
-                targetElement.classList.add('drag-over'); /* [cite: 105] */
+                targetElement.classList.add('drag-over');
             }
         }
 
         function removeDragOverHighlight(e) {
-            // MODIFICATION START: Look for the chart-box or planet-bank
-            let targetElement = e.target.closest('.chart-box[data-sign]') || (e.target.id === 'planet-bank' ? e.target : e.target.closest('#planet-bank'));
-            // MODIFICATION END
+            let targetElement = e.target.classList.contains('planets-container') || e.target.id === 'planet-bank' ? e.target : e.target.closest('.planets-container') || e.target.closest('#planet-bank');
             if (targetElement) {
-                targetElement.classList.remove('drag-over'); /* [cite: 107] */
+                targetElement.classList.remove('drag-over');
             }
         }
 
         function dropToChart(e) {
-            e.preventDefault(); /* [cite: 108] */
-            // MODIFICATION START: Find the chart-box first
-            let targetChartBox = e.target.closest('.chart-box[data-sign]');
+            e.preventDefault();
+            let targetContainer = e.target.classList.contains('planets-container') ? e.target : e.target.closest('.planets-container');
 
-            if (!targetChartBox || !draggedPlanetId) return;
+            if (!targetContainer || !draggedPlanetId) return;
 
-            // Then, get the actual planets-container inside the chart-box
-            let targetContainer = targetChartBox.querySelector('.planets-container');
-            // MODIFICATION END
+            targetContainer.classList.remove('drag-over');
+            hideTooltip();
+            hideRetrogradePanel(); // Hide panel on drop
 
-            if (!targetContainer) return; // Should not happen if HTML is consistent
-
-            targetChartBox.classList.remove('drag-over'); // Remove highlight from the chart-box /*  */
-            hideTooltip(); /*  */
-            hideRetrogradePanel(); // Hide panel on drop /* [cite: 110] */
-
-            const planetToMove = document.getElementById(draggedPlanetId); /* [cite: 110] */
-            if (!planetToMove) return; /* [cite: 111] */
+            const planetToMove = document.getElementById(draggedPlanetId);
+            if (!planetToMove) return;
 
             const currentParent = planetToMove.parentElement;
             
-            if (currentParent === targetContainer) return; /* [cite: 111] */
+            if (currentParent === targetContainer) return;
 
             if (draggedPlanetId === 'Lagna') {
-                const existingLagna = document.querySelector('.planets-container .Lagna'); /* [cite: 112] */
+                const existingLagna = document.querySelector('.planets-container .Lagna');
                 if (existingLagna) {
-                    const oldLagnaParent = existingLagna.parentElement; /* [cite: 113] */
-                    const planetBank = document.getElementById('planet-bank'); /* [cite: 114] */
+                    const oldLagnaParent = existingLagna.parentElement;
+                    const planetBank = document.getElementById('planet-bank');
                     
                     if (oldLagnaParent !== planetBank) {
-                        oldLagnaParent.removeChild(existingLagna); /* [cite: 114] */
-                        planetBank.appendChild(existingLagna); /* [cite: 115] */
-                        delete planetDegrees[existingLagna.id]; /* [cite: 115] */
-                        updatePlanetDegreeDisplay(existingLagna); /* [cite: 115] */
-                        updateRetrogradeSymbol(existingLagna); // Ensure symbol is removed /* [cite: 115] */
+                        oldLagnaParent.removeChild(existingLagna);
+                        planetBank.appendChild(existingLagna);
+                        delete planetDegrees[existingLagna.id];
+                        updatePlanetDegreeDisplay(existingLagna);
+                        updateRetrogradeSymbol(existingLagna); // Ensure symbol is removed
                     }
                 }
-                lagnaSign = targetContainer.dataset.sign; /* [cite: 115] */
-                updateHouseNumbers(); /* [cite: 116] */
+                lagnaSign = targetContainer.dataset.sign;
+                updateHouseNumbers();
             }
             
             if (currentParent && (currentParent.classList.contains('planets-container') || currentParent.id === 'planet-bank')) {
-                currentParent.removeChild(planetToMove); /* [cite: 116] */
+                currentParent.removeChild(planetToMove);
             }
 
-            targetContainer.appendChild(planetToMove); /* [cite: 117] */
+            targetContainer.appendChild(planetToMove);
             
-            const sign = targetContainer.dataset.sign; /* [cite: 117] */
+            const sign = targetContainer.dataset.sign;
             if (!planetDegrees[planetToMove.id]) {
                 planetDegrees[planetToMove.id] = {
                     sign: sign,
                     degree: parseFloat((Math.random() * 30).toFixed(2)),
                     isRetrograde: false // Default to not retrograde
-                }; /* [cite: 119] */
+                };
             } else {
-                planetDegrees[planetToMove.id].sign = sign; /* [cite: 119] */
+                planetDegrees[planetToMove.id].sign = sign;
             }
-            updatePlanetDegreeDisplay(planetToMove); /* [cite: 120] */
-            updateRetrogradeSymbol(planetToMove); // Update symbol on drop /* [cite: 121] */
+            updatePlanetDegreeDisplay(planetToMove);
+            updateRetrogradeSymbol(planetToMove); // Update symbol on drop
         }
 
         function dropToBank(e) {
-            e.preventDefault(); /* [cite: 121] */
-            let targetBank = e.target.id === 'planet-bank' ? e.target : e.target.closest('#planet-bank'); /* [cite: 122] */
+            e.preventDefault();
+            let targetBank = e.target.id === 'planet-bank' ? e.target : e.target.closest('#planet-bank');
 
             if (!targetBank || !draggedPlanetId) return;
 
-            targetBank.classList.remove('drag-over'); /* [cite: 122] */
-            hideTooltip(); /* [cite: 122] */
-            hideRetrogradePanel(); // Hide panel on drop /* [cite: 123] */
+            targetBank.classList.remove('drag-over');
+            hideTooltip();
+            hideRetrogradePanel(); // Hide panel on drop
 
-            const planetToMove = document.getElementById(draggedPlanetId); /* [cite: 123] */
-            if (!planetToMove) return; /* [cite: 124] */
+            const planetToMove = document.getElementById(draggedPlanetId);
+            if (!planetToMove) return;
             
             if (planetToMove.parentElement.id !== 'planet-bank') {
-                const currentParent = planetToMove.parentElement; /* [cite: 124] */
+                const currentParent = planetToMove.parentElement;
                 if (currentParent && currentParent.classList.contains('planets-container')) {
-                    currentParent.removeChild(planetToMove); /* [cite: 125] */
+                    currentParent.removeChild(planetToMove);
                 }
-                targetBank.appendChild(planetToMove); /* [cite: 126] */
+                targetBank.appendChild(planetToMove);
+
                 if (planetToMove.id === 'Lagna') {
-                    lagnaSign = null; /* [cite: 127] */
-                    updateHouseNumbers(); /* [cite: 128] */
+                    lagnaSign = null;
+                    updateHouseNumbers();
                 }
                 
-                delete planetDegrees[planetToMove.id]; /* [cite: 128] */
-                updatePlanetDegreeDisplay(planetToMove); /* [cite: 129] */
-                updateRetrogradeSymbol(planetToMove); // Ensure symbol is removed /* [cite: 129] */
+                delete planetDegrees[planetToMove.id];
+                updatePlanetDegreeDisplay(planetToMove);
+                updateRetrogradeSymbol(planetToMove); // Ensure symbol is removed
             }
         }
         
         // --- Degree Change Handlers ---
 
         function handleMouseDown(e) {
-            const planetElement = e.target.closest('.planet'); /* [cite: 129] */
+            const planetElement = e.target.closest('.planet');
             if (!planetElement) return;
 
             if (planetElement.parentElement.classList.contains('planets-container')) {
-                e.preventDefault(); /* [cite: 130] */
-                // Prevent text selection and default drag behavior
-                isChangingDegree = true; /* [cite: 131] */
-                degreeChangePlanet = planetElement; /* [cite: 132] */
-                initialMouseY = e.clientY; /* [cite: 132] */
-                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0; /* [cite: 132] */
+                e.preventDefault(); // Prevent text selection and default drag behavior
+                isChangingDegree = true;
+                degreeChangePlanet = planetElement;
+                initialMouseY = e.clientY;
+                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
 
                 document.addEventListener('mousemove', handleDegreeChangeMouseMove);
-                hideTooltip(); /* [cite: 132] */
-                hideRetrogradePanel(); // Hide panel when starting degree change /* [cite: 133] */
+                hideTooltip();
+                hideRetrogradePanel(); // Hide panel when starting degree change
             }
         }
 
         function handleDegreeChangeMouseMove(e) {
-            if (!isChangingDegree || !degreeChangePlanet) return; /* [cite: 133] */
-            const deltaY = initialMouseY - e.clientY; /* [cite: 134] */
+            if (!isChangingDegree || !degreeChangePlanet) return;
+            
+            const deltaY = initialMouseY - e.clientY;
             const degreeChange = deltaY / 20; 
-            let newDegree = initialPlanetDegree + degreeChange; /* [cite: 134] */
-            newDegree = Math.max(0, Math.min(29.99, newDegree)); /* [cite: 135] */
+            let newDegree = initialPlanetDegree + degreeChange;
+
+            newDegree = Math.max(0, Math.min(29.99, newDegree));
 
             if (planetDegrees[degreeChangePlanet.id]) {
-                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2)); /* [cite: 135] */
-                updatePlanetDegreeDisplay(degreeChangePlanet); /* [cite: 136] */
-                showTooltip(degreeChangePlanet); // Keep tooltip updated during drag /* [cite: 136] */
+                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
+                updatePlanetDegreeDisplay(degreeChangePlanet);
+                showTooltip(degreeChangePlanet); // Keep tooltip updated during drag
             }
         }
 
         function handleMouseUp() {
             if (isChangingDegree) {
-                isChangingDegree = false; /* [cite: 136] */
-                degreeChangePlanet = null; /* [cite: 137] */
+                isChangingDegree = false;
+                degreeChangePlanet = null;
                 document.removeEventListener('mousemove', handleDegreeChangeMouseMove);
             }
         }
 
         function handleDblClick(e) {
-            const planetToRemove = e.target.closest('.planet'); /* [cite: 137] */
+            const planetToRemove = e.target.closest('.planet');
             if (!planetToRemove) return;
 
             const currentContainer = planetToRemove.parentElement;
 
             if (currentContainer && currentContainer.classList.contains('planets-container')) {
-                currentContainer.removeChild(planetToRemove); /* [cite: 138] */
-                document.getElementById('planet-bank').appendChild(planetToRemove); /* [cite: 139] */
+                currentContainer.removeChild(planetToRemove);
+                document.getElementById('planet-bank').appendChild(planetToRemove);
                 
                 if (planetToRemove.id === 'Lagna') {
-                    lagnaSign = null; /* [cite: 139] */
-                    updateHouseNumbers(); /* [cite: 140] */
+                    lagnaSign = null;
+                    updateHouseNumbers();
                 }
                 
-                delete planetDegrees[planetToRemove.id]; /* [cite: 140] */
-                updatePlanetDegreeDisplay(planetToRemove); /* [cite: 141] */
-                updateRetrogradeSymbol(planetToRemove); // Ensure symbol is removed /* [cite: 141] */
-                hideTooltip(); /* [cite: 141] */
-                hideRetrogradePanel(); // Hide panel on double-click /* [cite: 142] */
+                delete planetDegrees[planetToRemove.id];
+                updatePlanetDegreeDisplay(planetToRemove);
+                updateRetrogradeSymbol(planetToRemove); // Ensure symbol is removed
+                hideTooltip();
+                hideRetrogradePanel(); // Hide panel on double-click
             }
         }
 
         // --- Tooltip Functions ---
 
         function handleContainerMouseOver(e) {
-            const planetElement = e.target.closest('.planet'); /* [cite: 142] */
+            const planetElement = e.target.closest('.planet');
             if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
-                showTooltip(planetElement); /* [cite: 143] */
+                showTooltip(planetElement);
             }
         }
 
         function handleContainerMouseOut(e) {
             if (!isChangingDegree && !retrogradePanel.classList.contains('active')) {
-                const relatedTarget = e.relatedTarget; /* [cite: 144] */
+                const relatedTarget = e.relatedTarget;
                 if (!relatedTarget || (!relatedTarget.closest('.planet') && !relatedTarget.closest('#planet-tooltip') && !relatedTarget.closest('#retrograde-panel'))) {
-                    hideTooltip(); /* [cite: 145] */
+                    hideTooltip();
                 }
             }
         }
 
         function handleMouseMoveForTooltip(e) {
             if (planetTooltip.classList.contains('active') && !isChangingDegree) {
-                const targetPlanet = e.target.closest('.planet'); /* [cite: 146] */
+                const targetPlanet = e.target.closest('.planet');
                 // Only keep tooltip if mouse is over the same planet that triggered it
                 if (targetPlanet && planetDegrees[targetPlanet.id] && e.target.closest('.planet') === document.querySelector('.planet.hovered-for-tooltip')) {
-                     showTooltip(targetPlanet); /* [cite: 147] */
+                     showTooltip(targetPlanet);
                 } else {
-                     hideTooltip(); /* [cite: 148] */
+                     hideTooltip();
                 }
             }
         }
 
         function showTooltip(planetElement) {
             // Add a class to the hovered planet to track it
-            document.querySelectorAll('.planet.hovered-for-tooltip').forEach(el => el.classList.remove('hovered-for-tooltip')); /* [cite: 149] */
-            planetElement.classList.add('hovered-for-tooltip'); /* [cite: 150] */
+            document.querySelectorAll('.planet.hovered-for-tooltip').forEach(el => el.classList.remove('hovered-for-tooltip'));
+            planetElement.classList.add('hovered-for-tooltip');
 
 
             const planetData = planetDegrees[planetElement.id];
             if (!planetData) {
-                hideTooltip(); /* [cite: 150] */
+                hideTooltip();
                 return;
             }
 
-            const nakData = getNakshatraAndPada(planetData.sign, planetData.degree); /* [cite: 151] */
-            let tooltipContent = `${planetData.degree.toFixed(2)}° ${planetData.sign} | ${nakData.nakshatra.name} – Pada ${nakData.pada}`; /* [cite: 152] */
-            if (planetData.isRetrograde) {
-                tooltipContent += " (Retrograde)"; /* [cite: 153] */
-            }
-            planetTooltip.textContent = tooltipContent; /* [cite: 154] */
+            const nakData = getNakshatraAndPada(planetData.sign, planetData.degree);
             
-            const rect = planetElement.getBoundingClientRect(); /* [cite: 154] */
+            let tooltipContent = `${planetData.degree.toFixed(2)}° ${planetData.sign} | ${nakData.nakshatra.name} – Pada ${nakData.pada}`;
+            if (planetData.isRetrograde) {
+                tooltipContent += " (Retrograde)";
+            }
+            planetTooltip.textContent = tooltipContent;
+            
+            const rect = planetElement.getBoundingClientRect();
             // Position above the planet
-            planetTooltip.style.left = `${rect.left + (rect.width / 2) - (planetTooltip.offsetWidth / 2)}px`; /* [cite: 155] */
-            planetTooltip.style.top = `${rect.top - planetTooltip.offsetHeight - 5}px`; /* [cite: 156] */
+            planetTooltip.style.left = `${rect.left + (rect.width / 2) - (planetTooltip.offsetWidth / 2)}px`;
+            planetTooltip.style.top = `${rect.top - planetTooltip.offsetHeight - 5}px`;
 
             if (parseFloat(planetTooltip.style.left) < 0) {
-                planetTooltip.style.left = '5px'; /* [cite: 156] */
+                planetTooltip.style.left = '5px';
             }
             if (parseFloat(planetTooltip.style.left) + planetTooltip.offsetWidth > window.innerWidth) {
-                planetTooltip.style.left = `${window.innerWidth - planetTooltip.offsetWidth - 5}px`; /* [cite: 157] */
+                planetTooltip.style.left = `${window.innerWidth - planetTooltip.offsetWidth - 5}px`;
             }
             if (parseFloat(planetTooltip.style.top) < 0) {
-                planetTooltip.style.top = `${rect.bottom + 5}px`; /* [cite: 158] */
+                planetTooltip.style.top = `${rect.bottom + 5}px`;
             }
 
-            planetTooltip.classList.add('active'); /* [cite: 159] */
+            planetTooltip.classList.add('active');
         }
 
         function hideTooltip() {
-            planetTooltip.classList.remove('active'); /* [cite: 160] */
-            document.querySelectorAll('.planet.hovered-for-tooltip').forEach(el => el.classList.remove('hovered-for-tooltip')); /* [cite: 161] */
+            planetTooltip.classList.remove('active');
+            document.querySelectorAll('.planet.hovered-for-tooltip').forEach(el => el.classList.remove('hovered-for-tooltip'));
         }
         
         // --- End Tooltip Functions ---
@@ -736,76 +712,73 @@
         // --- Retrograde Panel Functions ---
 
         function handlePlanetClick(e) {
-            const clickedPlanet = e.target.closest('.planet'); /* [cite: 161] */
+            const clickedPlanet = e.target.closest('.planet');
             if (clickedPlanet && clickedPlanet.parentElement.classList.contains('planets-container') && planetDegrees[clickedPlanet.id]) {
-                e.stopPropagation(); /* [cite: 162] */
-                // Prevent document click from closing panel immediately
+                e.stopPropagation(); // Prevent document click from closing panel immediately
 
-                selectedPlanetForRetrograde = clickedPlanet; /* [cite: 163] */
-                const planetData = planetDegrees[clickedPlanet.id]; /* [cite: 164] */
+                selectedPlanetForRetrograde = clickedPlanet;
+                const planetData = planetDegrees[clickedPlanet.id];
                 
                 panelPlanetName.textContent = `Planet: ${clickedPlanet.id}`;
                 retrogradeCheckbox.checked = planetData.isRetrograde;
 
-                const rect = clickedPlanet.getBoundingClientRect(); /* [cite: 164] */
+                const rect = clickedPlanet.getBoundingClientRect();
                 // Position next to the planet, slightly to the right
-                retrogradePanel.style.left = `${rect.right + 10}px`; /* [cite: 165] */
-                retrogradePanel.style.top = `${rect.top}px`; /* [cite: 166] */
+                retrogradePanel.style.left = `${rect.right + 10}px`;
+                retrogradePanel.style.top = `${rect.top}px`;
 
                 // Adjust if it goes off screen to the right
                 if (parseFloat(retrogradePanel.style.left) + retrogradePanel.offsetWidth > window.innerWidth) {
-                    retrogradePanel.style.left = `${rect.left - retrogradePanel.offsetWidth - 10}px`; /* [cite: 166] */
-                    // Try to the left
+                    retrogradePanel.style.left = `${rect.left - retrogradePanel.offsetWidth - 10}px`; // Try to the left
                 }
                 // Adjust if it goes off screen to the top
                 if (parseFloat(retrogradePanel.style.top) < 0) {
-                    retrogradePanel.style.top = `5px`; /* [cite: 167] */
+                    retrogradePanel.style.top = `5px`;
                 }
                 // Adjust if it goes off screen to the bottom
                 if (parseFloat(retrogradePanel.style.top) + retrogradePanel.offsetHeight > window.innerHeight) {
-                    retrogradePanel.style.top = `${window.innerHeight - retrogradePanel.offsetHeight - 5}px`; /* [cite: 168] */
+                    retrogradePanel.style.top = `${window.innerHeight - retrogradePanel.offsetHeight - 5}px`;
                 }
 
 
-                retrogradePanel.classList.add('active'); /* [cite: 169] */
+                retrogradePanel.classList.add('active');
             } else {
-                hideRetrogradePanel(); /* [cite: 170] */
+                hideRetrogradePanel();
             }
         }
 
         function toggleRetrograde() {
             if (selectedPlanetForRetrograde && planetDegrees[selectedPlanetForRetrograde.id]) {
-                const isChecked = retrogradeCheckbox.checked; /* [cite: 171] */
-                planetDegrees[selectedPlanetForRetrograde.id].isRetrograde = isChecked; /* [cite: 172] */
-                updateRetrogradeSymbol(selectedPlanetForRetrograde); /* [cite: 172] */
+                const isChecked = retrogradeCheckbox.checked;
+                planetDegrees[selectedPlanetForRetrograde.id].isRetrograde = isChecked;
+                updateRetrogradeSymbol(selectedPlanetForRetrograde);
                 // If tooltip is currently showing for this planet, update it
                 if (planetTooltip.classList.contains('active') && document.querySelector('.planet.hovered-for-tooltip') === selectedPlanetForRetrograde) {
-                    showTooltip(selectedPlanetForRetrograde); /* [cite: 173] */
+                    showTooltip(selectedPlanetForRetrograde);
                 }
             }
         }
 
         function updateRetrogradeSymbol(planetElement) {
-            let symbolSpan = planetElement.querySelector('.retrograde-symbol'); /* [cite: 173] */
+            let symbolSpan = planetElement.querySelector('.retrograde-symbol');
             if (!symbolSpan) {
-                symbolSpan = document.createElement('span'); /* [cite: 174] */
-                symbolSpan.classList.add('retrograde-symbol'); /* [cite: 175] */
-                planetElement.querySelector('.planet-symbol').insertAdjacentElement('afterend', symbolSpan); /* [cite: 175] */
+                symbolSpan = document.createElement('span');
+                symbolSpan.classList.add('retrograde-symbol');
+                planetElement.querySelector('.planet-symbol').insertAdjacentElement('afterend', symbolSpan);
             }
 
             if (planetDegrees[planetElement.id] && planetDegrees[planetElement.id].isRetrograde) {
-                symbolSpan.textContent = ' R'; /* [cite: 175] */
-                // ' R' for retrograde
-                planetElement.classList.add('retrograde'); /* [cite: 176] */
+                symbolSpan.textContent = ' R'; // ' R' for retrograde
+                planetElement.classList.add('retrograde');
             } else {
-                symbolSpan.textContent = ''; /* [cite: 177] */
-                planetElement.classList.remove('retrograde'); /* [cite: 178] */
+                symbolSpan.textContent = '';
+                planetElement.classList.remove('retrograde');
             }
         }
 
         function hideRetrogradePanel() {
-            retrogradePanel.classList.remove('active'); /* [cite: 178] */
-            selectedPlanetForRetrograde = null; /* [cite: 179] */
+            retrogradePanel.classList.remove('active');
+            selectedPlanetForRetrograde = null;
         }
 
         // Hide retrograde panel if click happens outside of it or a planet
@@ -813,7 +786,7 @@
             if (retrogradePanel.classList.contains('active') && 
                 !retrogradePanel.contains(e.target) && 
                 !e.target.closest('.planet')) {
-                hideRetrogradePanel(); /* [cite: 180] */
+                hideRetrogradePanel();
             }
         }
 
@@ -821,44 +794,46 @@
 
 
         function getNakshatraAndPada(sign, degree) {
-            const nakshatraLengthDegrees = 13.333333333; /* [cite: 180] */
-            const padaLengthDegrees = nakshatraLengthDegrees / 4; /* [cite: 181] */
+            const nakshatraLengthDegrees = 13.333333333;
+            const padaLengthDegrees = nakshatraLengthDegrees / 4;
 
-            const signIndex = signs.indexOf(sign); /* [cite: 181] */
+            const signIndex = signs.indexOf(sign);
             if (signIndex === -1) {
-                return { nakshatra: { name: 'N/A' }, pada: '-' }; /* [cite: 182] */
+                return { nakshatra: { name: 'N/A' }, pada: '-' };
             }
 
-            const totalDegrees = (signIndex * 30) + degree; /* [cite: 183] */
-            let nakshatraNumber = Math.floor(totalDegrees / nakshatraLengthDegrees); /* [cite: 184] */
+            const totalDegrees = (signIndex * 30) + degree;
+
+            let nakshatraNumber = Math.floor(totalDegrees / nakshatraLengthDegrees);
             
             if (nakshatraNumber >= nakshatras.length) {
-                nakshatraNumber = nakshatras.length - 1; /* [cite: 184] */
+                nakshatraNumber = nakshatras.length - 1;
             }
 
-            const foundNakshatra = nakshatras[nakshatraNumber]; /* [cite: 185] */
-            const degreesIntoCurrentNakshatra = totalDegrees % nakshatraLengthDegrees; /* [cite: 186] */
-            const pada = Math.floor(degreesIntoCurrentNakshatra / padaLengthDegrees) + 1; /* [cite: 186] */
+            const foundNakshatra = nakshatras[nakshatraNumber];
+            const degreesIntoCurrentNakshatra = totalDegrees % nakshatraLengthDegrees;
+            const pada = Math.floor(degreesIntoCurrentNakshatra / padaLengthDegrees) + 1;
+
             return {
                 nakshatra: foundNakshatra,
                 pada: pada
-            }; /* [cite: 187] */
+            };
         }
 
         function updatePlanetDegreeDisplay(planetElement) {
-            let degreeDisplay = planetElement.querySelector('.planet-degree-display'); /* [cite: 188] */
+            let degreeDisplay = planetElement.querySelector('.planet-degree-display');
             if (!degreeDisplay) {
-                degreeDisplay = document.createElement('span'); /* [cite: 189] */
-                degreeDisplay.classList.add('planet-degree-display'); /* [cite: 190] */
-                planetElement.appendChild(degreeDisplay); /* [cite: 190] */
+                degreeDisplay = document.createElement('span');
+                degreeDisplay.classList.add('planet-degree-display');
+                planetElement.appendChild(degreeDisplay);
             }
 
-            const planetData = planetDegrees[planetElement.id]; /* [cite: 190] */
+            const planetData = planetDegrees[planetElement.id];
+            
             if (planetData) {
-                degreeDisplay.textContent = `${planetData.degree.toFixed(2)}°`; /* [cite: 191] */
+                degreeDisplay.textContent = `${planetData.degree.toFixed(2)}°`;
             } else {
-                degreeDisplay.textContent = ''; /* [cite: 192] */
-                // Clear if planet is in bank
+                degreeDisplay.textContent = ''; // Clear if planet is in bank
             }
         }
 
@@ -866,45 +841,45 @@
             document.querySelectorAll('.planets-container').forEach(container => {
                 Array.from(container.children).forEach(planetEl => {
                     delete planetDegrees[planetEl.id];
-                    updatePlanetDegreeDisplay(planetEl); /* [cite: 194] */
-                    updateRetrogradeSymbol(planetEl); // Clear retrograde symbol on reset /* [cite: 194] */
+                    updatePlanetDegreeDisplay(planetEl);
+                    updateRetrogradeSymbol(planetEl); // Clear retrograde symbol on reset
                 });
                 container.innerHTML = '';
             });
-            document.getElementById('planet-bank').innerHTML = initialPlanetBankHTML; /* [cite: 195] */
+            document.getElementById('planet-bank').innerHTML = initialPlanetBankHTML;
             
             lagnaSign = null;
             resetAllPlanetDegrees();
             hideTooltip();
             hideRetrogradePanel(); // Hide panel on reset
-            updateHouseNumbers(); /* [cite: 195] */
+            updateHouseNumbers();
         }
 
         function resetAllPlanetDegrees() {
             for (const planetId in planetDegrees) {
-                delete planetDegrees[planetId]; /* [cite: 196] */
+                delete planetDegrees[planetId];
             }
             document.querySelectorAll('#planet-bank .planet').forEach(planetEl => {
                 updatePlanetDegreeDisplay(planetEl);
                 updateRetrogradeSymbol(planetEl); // Clear retrograde symbol for planets in bank
-            }); /* [cite: 197] */
+            });
         }
 
-        const chartBoxes = document.querySelectorAll('.chart-box[data-sign]'); /* [cite: 198] */
+        const chartBoxes = document.querySelectorAll('.chart-box[data-sign]');
         function updateHouseNumbers() {
             chartBoxes.forEach(box => {
                 const houseLabel = box.querySelector('.house-label');
                 if (lagnaSign) {
                     const ascendantIndexInSigns = signs.indexOf(lagnaSign);
                     const signInBox = box.dataset.sign;
-                    const signIndexInSigns = signs.indexOf(signInBox); /* [cite: 200] */
+                    const signIndexInSigns = signs.indexOf(signInBox);
                     
                     let houseNumber = (signIndexInSigns - ascendantIndexInSigns + 12) % 12 + 1;
-                    houseLabel.textContent = `${houseNumber}`; /* [cite: 200] */
+                    houseLabel.textContent = `${houseNumber}`;
                 } else {
-                    houseLabel.textContent = ''; /* [cite: 201] */
+                    houseLabel.textContent = '';
                 }
-            }); /* [cite: 202] */
+            });
         }
     </script>
 </body>
