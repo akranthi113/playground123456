@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Vedic Astrology South Indian Chart</title>
     <style>
         /* Base styles for all devices */
@@ -114,7 +114,17 @@
             color: #000;
             /* CRITICAL for mobile drag-and-drop / custom touch handling */
             touch-action: none;
+            /* FIX 6: iOS Quirks - Disable touch callout */
+            -webkit-touch-callout: none;
         }
+
+        /* FIX 1: Touch Feedback & Responsiveness */
+        .planet:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+            transition: transform 0.1s;
+        }
+
 
         /* NEW: Styles for the custom floating clone on mobile touch drag */
         .planet.dragging-clone {
@@ -122,7 +132,10 @@
             pointer-events: none; /* Allows events to pass through to elements beneath */
             z-index: 9999;
             opacity: 0.7;
-            transform: scale(1.05);
+            /* FIX 7: Visual Drag Preview */
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+            transform: scale(1.1) rotate(2deg);
+            transition: transform 0.2s; /* Apply transition to the clone's transform */
         }
 
         .planet-symbol {
@@ -1078,6 +1091,7 @@
         let floatingPlanetClone = null; // Custom clone for mobile drag feedback
         let originalParentOfDraggedPlanet = null; // To put it back if drag fails
         let isMoving = false; // Flag to indicate if a touch-drag is in progress (for mobile)
+        let isDragging = false; // Consolidated flag for active drag state
 
         const planetDegrees = {}; // Stores { sign: "...", degree: #, isRetrograde: boolean }
         let initialPlanetBankHTML = '';
@@ -1093,10 +1107,15 @@
         let touchStartTime = 0; // Track touch start time for tap/long-press
         const LONG_PRESS_THRESHOLD_MS = 300; // Reduced to 300ms for better responsiveness
         const DRAG_START_THRESHOLD_MS = 100; // Shorter delay before starting a custom drag
-        const MOVEMENT_THRESHOLD_PX = 5; // Reduced to 5px for better responsiveness
+        // FIX 5: Edge Case: Tiny Accidental Drags - Increased MOVEMENT_THRESHOLD_PX
+        const MOVEMENT_THRESHOLD_PX = 8;
 
         let initialTouchXForMovement = 0; // For detecting movement on touchstart for drag
         let initialTouchYForMovement = 0; // For detecting movement on touchstart for drag
+
+        // FIX 2: Ghost Clicks on Fast Taps
+        let lastTapTime = 0;
+        const DOUBLE_TAP_BLOCK_THRESHOLD_MS = 300; // Time to block successive taps
 
         const planetTooltip = document.getElementById('planet-tooltip');
         const signHouseTooltip = document.getElementById('sign-house-tooltip');
@@ -1170,10 +1189,11 @@
             const planetElement = e.target.closest('.planet');
             if (planetElement) {
                 // Ensure native drag only starts if not already adjusting degree via touch
-                if (isChangingDegree) {
+                if (isChangingDegree || isDragging) { // Added isDragging check
                     e.preventDefault();
                     return;
                 }
+                isDragging = true; // Set isDragging flag
                 draggedPlanetId = planetElement.id;
                 originalParentOfDraggedPlanet = planetElement.parentElement; // Store original parent
                 e.dataTransfer.setData('text/plain', draggedPlanetId);
@@ -1201,6 +1221,7 @@
                 originalParentOfDraggedPlanet = null; // Clear reference
                 document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             }
+            isDragging = false; // Reset isDragging flag
         }
 
 
@@ -1249,24 +1270,43 @@
 
         function handleMouseMove(e) {
             // Mouse move for general tooltip hovering (not degree change)
-            if (!isChangingDegree && !isMoving) { // Only show tooltip if not actively dragging or degree adjusting
-                const planetElement = e.target.closest('.planet');
-                const signLabel = e.target.closest('.sign-label');
+            // if (!isChangingDegree && !isMoving && !isDragging) { // Added isDragging
+            //     const planetElement = e.target.closest('.planet');
+            //     const signLabel = e.target.closest('.sign-label');
 
-                if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
-                    showTooltip(planetElement);
-                    hideSignHouseTooltip();
-                } else {
-                    hideTooltip();
-                }
+            //     if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
+            //         showTooltip(planetElement);
+            //         hideSignHouseTooltip();
+            //     } else {
+            //         hideTooltip();
+            //     }
 
-                if (signLabel) {
-                    handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
-                } else {
-                    hideSignHouseTooltip();
-                }
+            //     if (signLabel) {
+            //         handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
+            //     } else {
+            //         hideSignHouseTooltip();
+            //     }
+            // }
+            // Optimized mousemove:
+            if (isChangingDegree || isMoving || isDragging) return; // Don't show tooltips during active gestures
+
+            const planetElement = e.target.closest('.planet');
+            const signLabel = e.target.closest('.sign-label');
+
+            if (planetElement && planetElement.parentElement.classList.contains('planets-container') && planetDegrees[planetElement.id]) {
+                showTooltip(planetElement);
+                hideSignHouseTooltip();
+            } else {
+                hideTooltip();
+            }
+
+            if (signLabel) {
+                handleSignLabelMouseOver(e);
+            } else {
+                hideSignHouseTooltip();
             }
         }
+
 
         // Double click for removal (desktop)
         document.addEventListener('dblclick', (e) => {
@@ -1279,28 +1319,51 @@
 
         // --- Touch Event Handlers (Mobile/Tablet) ---
 
+        // FIX 8: Multi-Touch Chaos - Consolidated and placed at the top for immediate abortion
+        function cancelDrag() {
+            if (touchStartTimer) clearTimeout(touchStartTimer);
+            touchStartTimer = null;
+            isChangingDegree = false;
+            if (floatingPlanetClone) {
+                floatingPlanetClone.remove();
+                floatingPlanetClone = null;
+                if (document.getElementById(draggedPlanetId)) {
+                    document.getElementById(draggedPlanetId).style.opacity = '1';
+                }
+            }
+            isMoving = false;
+            isDragging = false; // Reset consolidated drag flag
+            draggedPlanetId = null;
+            originalParentOfDraggedPlanet = null;
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            hideTooltip();
+            hideSignHouseTooltip();
+            hideRetrogradePanel();
+            // FIX 4: Sticky Touch on Long Press - Re-enable scroll aggressively
+            document.body.style.touchAction = '';
+        }
+
         function handleTouchStart(e) {
+            // FIX 8: Multi-Touch Chaos - Immediate cancellation on multi-touch
+            if (e.touches.length > 1) {
+                cancelDrag(); // Abort any active drag/degree change
+                e.preventDefault(); // Prevent default browser gestures (e.g., zoom) on multi-touch
+                return;
+            }
+
+            // FIX 2: Ghost Clicks on Fast Taps
+            const now = Date.now();
+            if (now - lastTapTime < DOUBLE_TAP_BLOCK_THRESHOLD_MS) {
+                e.preventDefault(); // Prevent default if it's a very quick successive tap
+                return;
+            }
+            lastTapTime = now; // Update last tap time
+
+
             hideTooltip();
             hideSignHouseTooltip();
             hideRetrogradePanel(); // Always hide existing panels on new touch start
 
-            // Immediate cancellation on multi-touch
-            if (e.touches.length > 1) {
-                if (touchStartTimer) clearTimeout(touchStartTimer);
-                touchStartTimer = null;
-                isChangingDegree = false;
-                isMoving = false;
-                if (floatingPlanetClone) {
-                    floatingPlanetClone.remove();
-                    floatingPlanetClone = null;
-                    if (document.getElementById(draggedPlanetId)) {
-                        document.getElementById(draggedPlanetId).style.opacity = '1';
-                    }
-                }
-                draggedPlanetId = null;
-                e.preventDefault(); // Prevent default browser gestures (e.g., zoom) on multi-touch
-                return;
-            }
 
             const touchedElement = e.target.closest('.planet');
 
@@ -1313,6 +1376,7 @@
             touchStartTimer = null;
             isChangingDegree = false; // Assume not changing degree until long press
             isMoving = false; // Assume not dragging until movement exceeds threshold
+            isDragging = false; // Reset consolidated drag flag
 
             if (touchedElement) {
                 selectedPlanetForRetrograde = touchedElement; // Pre-select for potential retrograde panel
@@ -1344,10 +1408,11 @@
         }
 
         function startMobileDrag(e, planetElement) {
-            if (isMoving) return; // Already dragging
+            if (isDragging) return; // Already dragging
             if (!planetElement) return;
 
             isMoving = true;
+            isDragging = true; // Set consolidated drag flag
             draggedPlanetId = planetElement.id;
             originalParentOfDraggedPlanet = planetElement.parentElement;
 
@@ -1376,20 +1441,9 @@
 
 
         function handleTouchMove(e) {
-            // Immediate cancellation on multi-touch
+            // FIX 8: Multi-Touch Chaos - Immediate cancellation on multi-touch
             if (e.touches.length > 1) {
-                if (touchStartTimer) clearTimeout(touchStartTimer);
-                touchStartTimer = null;
-                isChangingDegree = false;
-                if (floatingPlanetClone) {
-                    floatingPlanetClone.remove();
-                    floatingPlanetClone = null;
-                    if (document.getElementById(draggedPlanetId)) {
-                        document.getElementById(draggedPlanetId).style.opacity = '1';
-                    }
-                }
-                isMoving = false;
-                draggedPlanetId = null;
+                cancelDrag();
                 e.preventDefault(); // Prevent default browser gestures (e.g., zoom) on multi-touch
                 return;
             }
@@ -1402,10 +1456,12 @@
             const dy = Math.abs(currentTouchY - initialTouchYForMovement);
 
             if (isChangingDegree && degreeChangePlanet) {
-                e.preventDefault(); // Prevent scrolling while adjusting degree
+                // FIX 3: Scroll Interference During Drag - Block scroll during degree adjust
+                e.preventDefault();
                 handleDegreeChangeMouseMove({ clientY: currentTouchY }); // Simulate mouse event for degree change
-            } else if (isMoving) { // If a custom drag is active
-                e.preventDefault(); // Prevent scrolling while dragging a clone
+            } else if (isDragging) { // If a custom drag is active (isMoving and isDragging are now unified)
+                // FIX 3: Scroll Interference During Drag - Block scroll during drag
+                e.preventDefault();
                 updateFloatingPlanetPosition(currentTouchX, currentTouchY);
                 // Highlight potential drop targets
                 document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); // Clear all
@@ -1418,6 +1474,7 @@
                 }
             } else {
                 // If not actively changing degree or dragging, check if movement exceeds threshold to start a drag
+                // FIX 5: Edge Case: Tiny Accidental Drags
                 if (dx > MOVEMENT_THRESHOLD_PX || dy > MOVEMENT_THRESHOLD_PX) {
                     if (touchStartTimer) {
                         clearTimeout(touchStartTimer); // Cancel pending long-press (degree adjust)
@@ -1426,7 +1483,8 @@
                     const touchedElement = e.target.closest('.planet');
                     if (touchedElement) {
                         startMobileDrag(e, touchedElement); // Start drag if movement is significant
-                        e.preventDefault(); // Prevent default scroll once drag starts
+                        // FIX 3: Scroll Interference During Drag - Block scroll once drag starts
+                        e.preventDefault();
                     }
                 }
                 // Do NOT preventDefault if not actively handling a gesture to allow page scrolling
@@ -1442,10 +1500,9 @@
         }
 
         function handleTouchEnd(e) {
-            // Immediate cancellation on multi-touch
+            // FIX 8: Multi-Touch Chaos - Immediate cancellation on multi-touch (fallback, primary in touchstart/move)
             if (e.touches.length > 1) {
-                // This scenario should be caught by touchstart/touchmove, but as a fallback
-                handleTouchCancel();
+                cancelDrag();
                 return;
             }
 
@@ -1455,17 +1512,19 @@
                 touchStartTimer = null;
             }
 
+            // FIX 4: Sticky Touch on Long Press - Reset touch state aggressively
+            document.body.style.touchAction = '';
+
             // If a degree change was active, clear it and hide tooltip
             if (isChangingDegree) {
                 isChangingDegree = false;
                 degreeChangePlanet = null;
                 hideTooltip();
-                // We've handled the degree change, no further action for this touch sequence
-                return;
+                return; // Degree adjustment handled, exit
             }
 
             // If a custom drag was in progress
-            if (isMoving && floatingPlanetClone) {
+            if (isDragging && floatingPlanetClone) { // Use consolidated isDragging flag
                 const dropX = e.changedTouches[0].clientX;
                 const dropY = e.changedTouches[0].clientY;
 
@@ -1501,6 +1560,7 @@
                     planetToMove.style.opacity = '1'; // Restore original opacity
                 }
                 isMoving = false;
+                isDragging = false; // Reset consolidated drag flag
                 draggedPlanetId = null;
                 originalParentOfDraggedPlanet = null;
                 document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -1543,24 +1603,7 @@
         }
 
         function handleTouchCancel(e) {
-            // Reset all touch-related states on cancel
-            if (touchStartTimer) clearTimeout(touchStartTimer);
-            isChangingDegree = false;
-            degreeChangePlanet = null;
-            if (floatingPlanetClone) {
-                floatingPlanetClone.remove();
-                floatingPlanetClone = null; // Clear reference
-            }
-            if (draggedPlanetId && document.getElementById(draggedPlanetId)) {
-                document.getElementById(draggedPlanetId).style.opacity = '1'; // Restore original opacity
-            }
-            isMoving = false;
-            draggedPlanetId = null;
-            originalParentOfDraggedPlanet = null;
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            hideTooltip();
-            hideSignHouseTooltip();
-            hideRetrogradePanel();
+            cancelDrag(); // Use the consolidated cancel function
         }
 
 
@@ -1941,13 +1984,11 @@
             if (planetTooltip.classList.contains('active') && planetTooltip.contains(e.target)) return;
             if (signHouseTooltip.classList.contains('active') && signHouseTooltip.contains(e.target)) return;
             if (retrogradePanel.classList.contains('active') && retrogradePanel.contains(e.target)) {
-                // Allow clicks inside retrograde panel to toggle checkbox
+                // Allow clicks inside retrograde panel to toggle checkbox or click close button
                 if (e.target.closest('#retrograde-checkbox') || e.target.closest('.close-button')) {
                     return;
                 }
-                // For other clicks inside panel, don't close immediately (e.g., if panel has more interactive elements later)
-                // If you want to close on any tap *outside* the checkbox/close button *but inside the panel*, you'd add more logic here.
-                return;
+                return; // For other clicks inside panel, don't close immediately (e.g., if panel has more interactive elements later)
             }
             // Also, if the click was *on a planet in the chart itself*, let its specific click handler manage it.
             // This prevents the click from immediately closing the panel it just opened.
