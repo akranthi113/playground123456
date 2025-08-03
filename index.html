@@ -18,7 +18,7 @@
             margin: 0;
             padding: 10px; /* Adjust padding for smaller screens */
             color: #fff; /* White Text */
-            overflow-x: hidden; /* Prevent horizontal scrolling */
+            /* overflow-x: hidden; Removed to allow browser scroll if needed */
         }
 
         .chart-title {
@@ -51,7 +51,7 @@
             justify-content: flex-start;
             text-align: center;
             padding: 3px;
-            overflow-y: auto;
+            overflow-y: auto; /* Allow internal scrolling if content overflows */
         }
 
         /* Scrollbar styles for chart boxes */
@@ -1058,8 +1058,14 @@
         // Touch event related variables for gesture detection
         let touchStartTimer = null;
         let lastTapTime = 0;
+        let isMoving = false; // Flag to track significant movement during touchstart
         const DOUBLE_TAP_THRESHOLD_MS = 300;
         const LONG_PRESS_THRESHOLD_MS = 500; // Time for long press to start drag/degree adjust
+        const MOVEMENT_THRESHOLD_PX = 10; // Pixels to consider movement as a drag, not a tap
+
+        let initialTouchX = 0; // For detecting movement on touchstart
+        let initialTouchYForMovement = 0; // For detecting movement on touchstart
+
 
         const planetTooltip = document.getElementById('planet-tooltip');
         const signHouseTooltip = document.getElementById('sign-house-tooltip');
@@ -1115,7 +1121,8 @@
                 label.addEventListener('mouseover', handleSignLabelMouseOver);
                 label.addEventListener('mouseout', handleSignLabelMouseOut);
                 label.addEventListener('mousemove', handleSignLabelMouseMove);
-                label.addEventListener('click', handleSignLabelMouseOver); // For mobile click to show tooltip
+                // For mobile, tap on sign label
+                label.addEventListener('click', handleSignLabelMouseOver);
             });
         }
 
@@ -1133,7 +1140,7 @@
                 hideSignHouseTooltip();
                 hideRetrogradePanel();
             } else {
-                e.preventDefault(); // Prevent native drag if we're in degree change mode
+                e.preventDefault(); // Prevent native drag if we're in degree change mode (shouldn't happen with proper logic)
             }
         }
 
@@ -1152,7 +1159,7 @@
 
             if (planetElement.parentElement.classList.contains('planets-container')) {
                 // Click on a planet in the chart for degree adjustment
-                e.preventDefault(); // Prevent text selection etc.
+                e.preventDefault(); // Prevent text selection etc. for desktop degree adjust
                 isChangingDegree = true;
                 degreeChangePlanet = planetElement;
                 initialTouchY = e.clientY; // Use clientY for mouse
@@ -1226,45 +1233,46 @@
             hideSignHouseTooltip();
             hideRetrogradePanel();
 
-            const touchedElement = e.target.closest('.planet') || e.target.closest('.sign-label');
+            // Reset flags
+            isMoving = false;
+            if (touchStartTimer) clearTimeout(touchStartTimer);
+            touchStartTimer = null;
 
-            if (!touchedElement) {
-                // If not touching a specific interactive element, clear any pending gestures
-                if (touchStartTimer) clearTimeout(touchStartTimer);
-                isChangingDegree = false;
-                degreeChangePlanet = null;
-                floatingPlanetClone = null;
-                draggedPlanetId = null;
+            if (e.touches.length !== 1) { // Only handle single touch
                 return;
             }
 
-            // Prevent default scrolling/zooming if interaction is with a draggable/interactive element
-            if (e.touches.length === 1 && (touchedElement.classList.contains('planet') || touchedElement.classList.contains('sign-label'))) {
-                e.preventDefault();
+            const touchedElement = e.target.closest('.planet') || e.target.closest('.sign-label');
+
+            initialTouchX = e.touches[0].clientX;
+            initialTouchYForMovement = e.touches[0].clientY;
+
+            // Only prevent default if we're directly interacting with a draggable/interactive element
+            if (touchedElement && (touchedElement.classList.contains('planet') || touchedElement.classList.contains('sign-label'))) {
+                // We'll prevent default on initial touch. If it turns out to be a scroll, we'll re-enable it on touchmove.
+                // This is a common pattern to avoid click delays on mobile.
+                // e.preventDefault(); // Temporarily removed from here, will add conditionally in touchmove or if drag starts
             }
 
-            const currentTouchX = e.touches[0].clientX;
-            const currentTouchY = e.touches[0].clientY;
 
-            if (touchedElement.classList.contains('planet')) {
+            if (touchedElement && touchedElement.classList.contains('planet')) {
                 const planetElement = touchedElement;
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTapTime;
 
                 if (planetElement.parentElement.id === 'planet-bank') {
-                    // Planet in the bank: Prepare for drag (long press)
+                    // Planet in the bank: Initiate drag on long press
                     touchStartTimer = setTimeout(() => {
-                        if (e.touches.length === 1) { // Confirm single touch for drag
+                        if (!isMoving) { // Only start drag if not significantly moved
                             draggedPlanetId = planetElement.id;
-                            originalParentOfDraggedPlanet = planetElement.parentElement; // Bank is original parent
+                            originalParentOfDraggedPlanet = planetElement.parentElement;
 
-                            // Create a clone for visual drag
                             floatingPlanetClone = planetElement.cloneNode(true);
                             floatingPlanetClone.classList.add('dragging-clone');
                             floatingPlanetClone.style.width = `${planetElement.offsetWidth}px`;
                             floatingPlanetClone.style.height = `${planetElement.offsetHeight}px`;
                             document.body.appendChild(floatingPlanetClone);
-                            updateFloatingPlanetPosition(currentTouchX, currentTouchY, floatingPlanetClone);
+                            updateFloatingPlanetPosition(initialTouchX, initialTouchYForMovement, floatingPlanetClone);
                             planetElement.style.opacity = '0'; // Hide original temporarily
                         }
                     }, LONG_PRESS_THRESHOLD_MS);
@@ -1277,12 +1285,13 @@
                         lastTapTime = 0; // Reset double tap
                     } else {
                         // Single tap or potential long press for degree adjust
-                        lastTapTime = currentTime;
+                        lastTapTime = currentTime; // Update for double tap detection
+                        selectedPlanetForRetrograde = planetElement; // Pre-select for potential panel
                         touchStartTimer = setTimeout(() => {
-                            if (e.touches.length === 1) {
+                            if (!isMoving) { // Only start degree adjust if not significantly moved
                                 isChangingDegree = true;
                                 degreeChangePlanet = planetElement;
-                                initialTouchY = currentTouchY;
+                                initialTouchY = initialTouchYForMovement; // Store for degree calculations
                                 initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
                                 showTooltip(planetElement); // Show tooltip during degree change
                             }
@@ -1291,22 +1300,36 @@
                 }
             } else if (touchedElement.classList.contains('sign-label')) {
                 // Sign label tap: Show sign/house tooltip
-                handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
+                // handleSignLabelMouseOver(e); // This takes the event directly.
+                // Let's ensure this is a clean tap, not a drag attempt.
+                touchStartTimer = setTimeout(() => {
+                    if (!isMoving) {
+                        handleSignLabelMouseOver(e); // Reuses the mouseover logic for display
+                    }
+                }, 100); // Small delay to differentiate from accidental drag attempt
             }
         }
 
-
         function handleTouchMove(e) {
-            if (e.touches.length > 1) { // Ignore multi-touch for now
+            if (e.touches.length !== 1) { // Ignore multi-touch
                 if (touchStartTimer) clearTimeout(touchStartTimer);
-                if (floatingPlanetClone) { // If dragging, end drag on multi-touch
-                    handleTouchCancel(e);
-                }
+                if (floatingPlanetClone) handleTouchCancel(e); // Cancel drag if multi-touch
                 return;
             }
 
             const currentTouchX = e.touches[0].clientX;
             const currentTouchY = e.touches[0].clientY;
+
+            const dx = Math.abs(currentTouchX - initialTouchX);
+            const dy = Math.abs(currentTouchY - initialTouchYForMovement);
+
+            if (dx > MOVEMENT_THRESHOLD_PX || dy > MOVEMENT_THRESHOLD_PX) {
+                isMoving = true; // Significant movement detected
+                if (touchStartTimer) { // If a long-press timer was running, cancel it
+                    clearTimeout(touchStartTimer);
+                    touchStartTimer = null;
+                }
+            }
 
             if (floatingPlanetClone && draggedPlanetId) {
                 // Actively dragging a planet clone
@@ -1317,17 +1340,9 @@
                 // Actively adjusting degree
                 e.preventDefault(); // Prevent scrolling while adjusting degree
                 handleDegreeChangeMouseMove({ clientY: currentTouchY }); // Simulate mouse event for degree change
-            } else if (touchStartTimer) {
-                // If a timer is running (for long press), and significant movement occurs, cancel the timer
-                // This differentiates a "tap" from a "drag" attempt
-                const dx = Math.abs(currentTouchX - (e.changedTouches[0].clientX || currentTouchX));
-                const dy = Math.abs(currentTouchY - (e.changedTouches[0].clientY || currentTouchY));
-                const movementThreshold = 10; // Pixels
-                if (dx > movementThreshold || dy > movementThreshold) {
-                    clearTimeout(touchStartTimer);
-                    touchStartTimer = null;
-                }
             }
+            // IMPORTANT: If neither dragging nor degree changing, DO NOT preventDefault, allow scrolling.
+            // This is the key fix for scrolling issues.
         }
 
         function handleTouchEnd(e) {
@@ -1337,7 +1352,7 @@
                 touchStartTimer = null;
             }
 
-            // Cleanup after degree adjustment
+            // If a degree change was active, clear it and hide tooltip
             if (isChangingDegree) {
                 isChangingDegree = false;
                 degreeChangePlanet = null;
@@ -1345,7 +1360,7 @@
                 return; // Stop here if it was a degree adjustment gesture
             }
 
-            // Handle actual drop if a clone was being dragged
+            // If a planet clone was being dragged, handle the drop
             if (floatingPlanetClone && draggedPlanetId) {
                 const dropPointX = e.changedTouches[0].clientX;
                 const dropPointY = e.changedTouches[0].clientY;
@@ -1408,23 +1423,19 @@
                              updateHouseNumbers();
                         }
                     }
-                    // If it was from chart, and dropped outside, re-add its data
-                    if (!originalParentOfDraggedPlanet.classList.contains('planets-container') && planetDegrees[originalPlanet.id]) {
-                         // This is a complex edge case - if it came from bank but dropped outside valid, it stays in bank.
-                         // If it came from chart and dropped outside, it should go back.
-                         // The logic above ensures it goes back to originalParent.
-                    }
                 }
                 draggedPlanetId = null; // Clear state
                 originalParentOfDraggedPlanet = null;
                 document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             } else {
-                 // This was likely a quick tap on a planet in the chart (not a drag or degree adjust)
-                 // Or a tap on nothing.
+                // This was likely a quick tap on a planet in the chart (not a drag or degree adjust)
                 const tappedPlanet = e.target.closest('.planet');
                 if (tappedPlanet && tappedPlanet.parentElement.classList.contains('planets-container')) {
-                    // This handles showing the retrograde panel on a single tap
-                    handlePlanetClick(e);
+                    // If no significant movement (i.e., it was a tap) and not a double tap already handled
+                    const currentTime = new Date().getTime();
+                    if (!isMoving && (currentTime - lastTapTime > DOUBLE_TAP_THRESHOLD_MS || lastTapTime === 0)) {
+                        handlePlanetClick(e); // Show retrograde panel
+                    }
                 }
             }
 
@@ -1452,6 +1463,7 @@
             hideTooltip();
             hideSignHouseTooltip();
             hideRetrogradePanel();
+            isMoving = false; // Reset movement flag
         }
 
         function updateFloatingPlanetPosition(x, y, planetEl) {
@@ -1544,7 +1556,7 @@
             targetBank.classList.remove('drag-over');
             hideTooltip();
             hideSignHouseTooltip();
-                hideRetrogradePanel();
+            hideRetrogradePanel();
 
             const planetToMove = document.getElementById(draggedPlanetId);
             if (!planetToMove) return;
@@ -1717,7 +1729,7 @@
             if (top + signHouseTooltip.offsetHeight > window.innerHeight - 10) {
                 top = clientY - signHouseTooltip.offsetHeight - 15; // Position above if no space below
                 if (top < 10) {
-                    top = 10; // Fallback to top-left if too large
+                    top = 10; // Fallback to top if too large
                 }
             }
 
@@ -1743,8 +1755,6 @@
         function handlePlanetClick(e) {
             const clickedPlanet = e.target.closest('.planet');
             if (clickedPlanet && clickedPlanet.parentElement.classList.contains('planets-container') && planetDegrees[clickedPlanet.id]) {
-                e.stopPropagation(); // Stop propagation to prevent handleOutsideClick from immediately hiding
-
                 // If clicking the same planet and panel is active, hide it
                 if (selectedPlanetForRetrograde === clickedPlanet && retrogradePanel.classList.contains('active')) {
                     hideRetrogradePanel();
@@ -1788,11 +1798,8 @@
                 retrogradePanel.style.top = `${top}px`;
 
                 retrogradePanel.classList.add('active');
-            } else {
-                // If clicked outside the retrograde panel and not on a planet, hide it
-                if (!retrogradePanel.contains(e.target)) {
-                    hideRetrogradePanel();
-                }
+                // Ensure outside click listener won't immediately close it
+                e.stopPropagation();
             }
         }
 
@@ -1838,24 +1845,17 @@
         }
 
         function handleOutsideClick(e) {
-            // Check if click target is outside of retrograde panel AND not on a planet
-            if (retrogradePanel.classList.contains('active') &&
-                !retrogradePanel.contains(e.target) &&
-                !e.target.closest('.planet')) {
-                hideRetrogradePanel();
-            }
-            // Check if click target is outside of sign/house tooltip AND not on a sign label
-            if (signHouseTooltip.classList.contains('active') &&
-                !signHouseTooltip.contains(e.target) &&
-                !e.target.closest('.sign-label')) {
-                hideSignHouseTooltip();
-            }
-             // Hide planet tooltip if clicked outside, and not interacting with degree change
-             if (planetTooltip.classList.contains('active') && !isChangingDegree &&
-                 !planetTooltip.contains(e.target) && !e.target.closest('.planet')) {
-                hideTooltip();
-             }
+            // Don't hide if the click was within an active tooltip/panel, or directly on a planet/sign-label that might open one
+            if (planetTooltip.classList.contains('active') && planetTooltip.contains(e.target)) return;
+            if (signHouseTooltip.classList.contains('active') && signHouseTooltip.contains(e.target)) return;
+            if (retrogradePanel.classList.contains('active') && retrogradePanel.contains(e.target)) return;
+            if (e.target.closest('.planet') || e.target.closest('.sign-label')) return;
+
+            hideRetrogradePanel();
+            hideSignHouseTooltip();
+            hideTooltip();
         }
+
 
         // --- End Retrograde Panel Functions ---
 
