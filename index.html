@@ -340,6 +340,14 @@
             color: #e0e0e0;
             margin-left: 10px;
         }
+
+        .controls-tip {
+            font-weight: bold; 
+            color: #ffcc80; 
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        
     </style>
 </head>
 <body>
@@ -371,6 +379,7 @@
             <div class="house-label"></div>
             <div class="planets-container" data-sign="Aquarius"></div>
         </div>
+        <!-- Single empty space replacing the four central boxes -->
         <div id="central-empty-space"></div>
         <div class="chart-box" data-sign="Cancer">
             <div class="sign-label">Cn</div>
@@ -429,12 +438,15 @@
                 <span class="planet Ketu" draggable="true" id="Ketu"><span class="planet-symbol">Ke</span></span>
             </div>
         </div>
+        <p id="drag-lagna-tip" class="controls-tip">&#x272A; Tip: Place Lagna in a chart box to define houses and see house keywords.</p>
         <button id="clear-chart-btn" onclick="resetChart()">Clear Chart</button>
         <p id="degree-tip-text">Tip: Click and drag a planet in the chart up or down to adjust its degree.</p>
     </div>
 
     <div id="planet-tooltip" class="tooltip"></div>
-    <div id="sign-tooltip" class="tooltip"></div> <div id="retrograde-panel">
+    <div id="sign-tooltip" class="tooltip"></div> <!-- New tooltip for sign labels -->
+
+    <div id="retrograde-panel">
         <div class="panel-planet-name"></div>
         <label>
             <input type="checkbox" id="retrograde-checkbox"> <span id="retrograde-label">Retrograde</span>
@@ -510,19 +522,21 @@
             en: {
                 chartTitle: "Interactive South Indian Vedic Astrology Chart",
                 dragPlanetsTip: "Drag Planets to Chart (Double-click or drag to bank to remove):",
+                dragLagnaTip: "✨ Tip: Place Lagna in a chart box to define houses and see house keywords.",
                 clearChart: "Clear Chart",
                 degreeTip: "Tip: Click and drag a planet in the chart up or down to adjust its degree.",
                 planet: "Planet",
                 nakshatra: "Nakshatra",
                 pada: "Pada",
                 house: "House",
-                houseKeywords: "House Keywords",
-                signKeywords: "Sign Keywords",
+                houseKeywordsTitle: "House Keywords",
+                signKeywordsTitle: "Sign Keywords",
                 ruler: "Ruler",
                 element: "Element",
                 modality: "Modality",
                 retrograde: "Retrograde",
-                lagna: "Lagna", // Used for tooltip for Lagna planet
+                lagna: "Lagna",
+                noHouseInfo: "(Place Lagna to see House info)",
                 
                 signs: {
                     Aries: "Aries", Taurus: "Taurus", Gemini: "Gemini", Cancer: "Cancer", Leo: "Leo", Virgo: "Virgo",
@@ -576,21 +590,23 @@
                 // Note: Nakshatra names are currently English only. Full Telugu support would require translating these as well.
             },
             te: {
-                chartTitle: "ఇంటరాక్టివ్ దక్షిణ భారతీయ వేద జ్యోతిష్య చార్ట్", // Interactive South Indian Vedic Astrology Chart
-                dragPlanetsTip: "గ్రహాలను చార్ట్‌కు లాగండి (తొలగించడానికి డబుల్-క్లిక్ చేయండి లేదా బ్యాంక్‌కు లాగండి):", // Drag Planets to Chart (Double-click or drag to bank to remove):
-                clearChart: "చార్ట్ క్లియర్ చేయండి", // Clear Chart
-                degreeTip: "చిట్కా: చార్ట్‌లోని గ్రహంపై క్లిక్ చేసి పైకి లేదా క్రిందికి లాగడం ద్వారా దాని డిగ్రీని సర్దుబాటు చేయండి.", // Tip: Click and drag a planet in the chart up or down to adjust its degree.
-                planet: "గ్రహం", // Planet
-                nakshatra: "నక్షత్రం", // Nakshatra
-                pada: "పాద", // Pada
-                house: "ఇల్లు", // House
-                houseKeywords: "ఇంటి కీవర్డ్స్", // House Keywords
-                signKeywords: "రాశి కీవర్డ్స్", // Sign Keywords
-                ruler: "పాలించే గ్రహం", // Ruler
-                element: "మూలకం", // Element
-                modality: "మోడాలిటీ", // Modality
-                retrograde: "వక్రి", // Retrograde
-                lagna: "లగ్న", // Used for tooltip for Lagna planet
+                chartTitle: "ఇంటరాక్టివ్ దక్షిణ భారతీయ వేద జ్యోతిష్య చార్ట్",
+                dragPlanetsTip: "గ్రహాలను చార్ట్‌కు లాగండి (తొలగించడానికి డబుల్-క్లిక్ చేయండి లేదా బ్యాంక్‌కు లాగండి):",
+                dragLagnaTip: "✨ చిట్కా: ఇళ్లని నిర్వచించడానికి మరియు ఇంటి కీవర్డ్స్ చూడటానికి లగ్నాని ఒక చార్ట్ బాక్స్‌లో ఉంచండి.",
+                clearChart: "చార్ట్ క్లియర్ చేయండి",
+                degreeTip: "చిట్కా: చార్ట్‌లోని గ్రహంపై క్లిక్ చేసి పైకి లేదా క్రిందికి లాగడం ద్వారా దాని డిగ్రీని సర్దుబాటు చేయండి.",
+                planet: "గ్రహం",
+                nakshatra: "నక్షత్రం",
+                pada: "పాద",
+                house: "ఇల్లు",
+                houseKeywordsTitle: "ఇంటి కీవర్డ్స్",
+                signKeywordsTitle: "రాశి కీవర్డ్స్",
+                ruler: "పాలించే గ్రహం",
+                element: "మూలకం",
+                modality: "మోడాలిటీ",
+                retrograde: "వక్రి",
+                lagna: "లగ్న",
+                noHouseInfo: "(ఇంటి సమాచారం చూడటానికి లగ్నాని ఉంచండి)",
 
                 signs: {
                     Aries: "మేషం", Taurus: "వృషభం", Gemini: "మిథునం", Cancer: "కర్కాటకం", Leo: "సింహం", Virgo: "కన్య",
@@ -612,7 +628,7 @@
                     11: "11వ ఇల్లు", 12: "12వ ఇల్లు"
                 },
                 houseKeywords: {
-                    1: "స్వయం, వ్యక్తిత్వం, భౌతిక శరీరం, రూపురేఖలు, ఆరోగ్యం", // Self, Personality, Physical Body, Appearance, Health
+                    1: "స్వయం, వ్యక్తిత్వం, భౌతిక శరీరం, రూపురేఖలు, ఆరోగ్యం",
                     2: "సంపద, కుటుంబం, మాట, ఆహారం, వనరులు, విలువలు",
                     3: "సహోదరులు, ధైర్యం, కమ్యూనికేషన్, చిన్న ప్రయాణాలు, అభిరుచులు, నైపుణ్యాలు",
                     4: "తల్లి, ఇల్లు, భూమి, వాహనాలు, ఆనందం, విద్య, అంతర్గత శాంతి",
@@ -721,6 +737,7 @@
             // Update main UI elements
             document.getElementById('chart-main-title').textContent = langData.chartTitle;
             document.getElementById('drag-planets-tip').textContent = langData.dragPlanetsTip;
+            document.getElementById('drag-lagna-tip').textContent = langData.dragLagnaTip; // New line
             document.getElementById('clear-chart-btn').textContent = langData.clearChart;
             document.getElementById('degree-tip-text').textContent = langData.degreeTip;
             document.getElementById('retrograde-label').textContent = langData.retrograde;
@@ -1017,19 +1034,23 @@
             let houseNumber = null;
             if (lagnaSign) {
                 const ascendantIndexInSigns = signs.indexOf(lagnaSign);
-                const signIndexInSigns = signs.indexOf(signName);
+                const signInBox = chartBox.dataset.sign;
+                const signIndexInSigns = signs.indexOf(signInBox);
+                
                 houseNumber = (signIndexInSigns - ascendantIndexInSigns + 12) % 12 + 1;
             }
 
             let tooltipContent = `<span><strong>${langData.signs[signName] || signName}</strong></span>`;
 
             if (houseNumber) {
-                tooltipContent += `<span>${langData.houseNames[houseNumber] || houseNumber + " " + langData.house}</span>`;
-                tooltipContent += `<span><strong>${langData.houseKeywords}:</strong> ${langData.houseKeywords[houseNumber] || houseInfo[houseNumber].keywords}</span>`;
+                tooltipContent += `<span><strong>${langData.house}:</strong> ${langData.houseNames[houseNumber] || houseNumber + " " + langData.house}</span>`;
+                tooltipContent += `<span><strong>${langData.houseKeywordsTitle}:</strong> ${langData.houseKeywords[houseNumber] || houseInfo[houseNumber].keywords}</span>`;
+            } else {
+                tooltipContent += `<span style="color:#ffcc80;">${langData.noHouseInfo}</span>`;
             }
 
             if (signOriginalData) {
-                tooltipContent += `<span><strong>${langData.signKeywords}:</strong> ${langData.signKeywords[signName] || signOriginalData.keywords}</span>`;
+                tooltipContent += `<span><strong>${langData.signKeywordsTitle}:</strong> ${langData.signKeywords[signName] || signOriginalData.keywords}</span>`;
                 tooltipContent += `<span><strong>${langData.ruler}:</strong> ${signOriginalData.ruler} | <strong>${langData.element}:</strong> ${langData.elements[signOriginalData.element] || signOriginalData.element} | <strong>${langData.modality}:</strong> ${langData.modalities[signOriginalData.modality] || signOriginalData.modality}</span>`;
             }
             
@@ -1203,7 +1224,6 @@
             resetAllPlanetDegrees();
             hideAllTooltipsAndPanels();
             updateHouseNumbers();
-            // Re-apply current language for planet symbols in bank (e.g., Lagna 'L' vs 'ల') if needed
             updateUIForLanguage();
         }
 
