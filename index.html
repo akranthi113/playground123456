@@ -5,37 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vedic Astrology South Indian Chart</title>
     <style>
+        :root {
+            --dark-bg: #121212;
+            --darker-bg: #0a0a0a;
+            --chart-bg: #1a1a1a;
+            --box-bg: #242424;
+            --border-color: #333;
+            --light-border: #444;
+            --text-color: #e0e0e0;
+            --light-text: #bdbdbd;
+            --accent-color: #64b5f6;
+            --accent-hover: #90caf9;
+            --highlight-color: #ffcc80;
+            --tooltip-bg: #333;
+            --panel-bg: #2a2a2a;
+            --shadow: 0 4px 12px rgba(0,0,0,0.5);
+            --transition: all 0.3s ease;
+        }
+
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: var(--transition);
         }
 
         body {
-            background-color: #121212; /* Dark background */
-            margin: 0;
+            background-color: var(--dark-bg);
+            color: var(--text-color);
             padding: 20px;
-            color: #e0e0e0; /* Light text */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
         }
 
         .chart-title {
             text-align: center;
-            font-size: 1.7em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #bdbdbd; /* Lighter title */
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--highlight-color);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
         }
 
         .chart-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: minmax(85px, auto) minmax(85px, auto) minmax(85px, auto) minmax(85px, auto);
-            gap: 1px;
-            width: 480px;
+            grid-template-rows: minmax(100px, auto) minmax(100px, auto) minmax(100px, auto) minmax(100px, auto);
+            gap: 2px;
+            width: 100%;
+            max-width: 600px;
             height: auto;
-            margin: auto;
-            border: 1px solid #444; /* Light border */
-            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
+            margin: 0 auto;
+            border: 1px solid var(--light-border);
+            box-shadow: var(--shadow);
+            background-color: var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
 
             grid-template-areas:
                 "pisces aries taurus gemini"
@@ -45,16 +85,16 @@
         }
 
         .chart-box {
-            border: 1px solid #333; /* Darker inner borders */
+            border: 1px solid var(--border-color);
             position: relative;
-            background-color: #242424; /* Dark box background */
+            background-color: var(--box-bg);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             text-align: center;
-            padding: 3px;
-            min-height: 85px;
+            padding: 5px;
+            min-height: 100px;
             overflow: visible;
         }
 
@@ -73,80 +113,102 @@
 
         #central-empty-space {
             grid-area: center;
-            background-color: #1a1a1a;
-            border: 1px solid #333;
+            background-color: var(--chart-bg);
+            border: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .center-label {
+            color: var(--light-text);
+            font-size: 0.9em;
+            text-align: center;
         }
 
         .sign-label {
             position: absolute;
-            top: 2px;
-            left: 2px;
-            font-size: 0.7em;
-            color: #aaa;
-            font-weight: normal;
+            top: 5px;
+            left: 5px;
+            font-size: 0.8em;
+            color: var(--highlight-color);
+            font-weight: 600;
             cursor: help;
-            padding: 2px 4px;
-            border-radius: 3px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background-color: rgba(0,0,0,0.3);
+            z-index: 1;
         }
         .sign-label:hover {
-            background-color: #333;
-            color: #fff;
+            background-color: var(--accent-color);
+            color: var(--dark-bg);
         }
 
         .house-label {
             position: absolute;
-            bottom: 2px;
-            right: 2px;
-            font-size: 0.75em;
-            color: #64b5f6;
+            bottom: 5px;
+            right: 5px;
+            font-size: 0.9em;
+            color: var(--accent-color);
             font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background-color: rgba(0,0,0,0.3);
+            z-index: 1;
         }
 
         .planet {
             cursor: grab;
-            margin: 1px;
+            margin: 3px;
             font-size: 1em;
-            padding: 2px 4px;
-            border-radius: 3px;
+            padding: 4px 8px;
+            border-radius: 5px;
             display: flex;
             flex-direction: row;
             align-items: center;
             white-space: nowrap;
             user-select: none;
-            transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
-            box-shadow: 0.5px 0.5px 2px rgba(255,255,255,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             position: relative;
-            color: #121212;
+            color: var(--dark-bg);
+            font-weight: 500;
+            min-width: 60px;
+            justify-content: center;
+            z-index: 2;
         }
 
         .planet-symbol {
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.1em;
+            margin-right: 3px;
         }
 
         .planet-degree-display {
-            font-size: 0.8em;
-            color: #121212;
-            margin-top: 0;
-            margin-left: 2px;
+            font-size: 0.75em;
+            color: var(--dark-bg);
+            margin-left: 4px;
+            opacity: 0.9;
         }
 
         .Lagna {
             background-color: transparent;
-            border: 1px solid #ffb300;
-            color: #e0e0e0;
+            border: 2px solid #ffb300;
+            color: var(--highlight-color);
             font-weight: bold;
         }
 
         .planet:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
         }
 
         .planet:active {
             cursor: grabbing;
+            transform: translateY(0);
         }
 
         .Sun { background-color: #ffd700; }
@@ -162,124 +224,158 @@
         .planets-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 1px;
+            gap: 3px;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             width: 100%;
-            margin-top: 20px;
-            min-height: 20px;
+            margin-top: 25px;
+            min-height: 30px;
             height: auto;
-            overflow-y: hidden;
+            overflow-y: auto;
+            padding: 5px;
+            align-content: flex-start;
         }
 
         .chart-box.drag-over {
-            background-color: #1f3a5f;
-            border: 1px dashed #64b5f6;
+            background-color: rgba(100, 181, 246, 0.1);
+            border: 2px dashed var(--accent-color);
         }
 
         #planet-bank.drag-over {
-            background-color: #1f3a5f;
-            border: 1px dashed #64b5f6;
+            background-color: rgba(100, 181, 246, 0.1);
+            border: 2px dashed var(--accent-color);
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .controls {
-            text-align: center;
-            margin-top: 25px;
-            padding: 15px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            background-color: #1e1e1e;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--darker-bg);
+            box-shadow: var(--shadow);
         }
 
-        .controls div {
+        .controls-section {
+            margin-bottom: 15px;
+        }
+
+        .controls-title {
+            font-size: 1.1em;
             margin-bottom: 10px;
+            color: var(--highlight-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls-title i {
+            font-size: 1.2em;
         }
 
         button {
-            padding: 7px 14px;
+            padding: 8px 16px;
             font-size: 0.95em;
-            margin: 4px;
-            border-radius: 4px;
-            border: 1px solid #64b5f6;
-            background-color: transparent;
-            color: #64b5f6;
+            margin: 5px;
+            border-radius: 6px;
+            border: 1px solid var(--accent-color);
+            background-color: rgba(100, 181, 246, 0.1);
+            color: var(--accent-color);
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: var(--transition);
+            font-weight: 500;
         }
 
         button:hover {
-            background-color: #64b5f6;
-            color: #121212;
+            background-color: var(--accent-color);
+            color: var(--dark-bg);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         button.secondary {
-            border-color: #aaa;
-            color: #aaa;
+            border-color: var(--light-text);
+            color: var(--light-text);
+            background-color: rgba(189, 189, 189, 0.1);
         }
 
         button.secondary:hover {
-            background-color: #aaa;
-            color: #121212;
+            background-color: var(--light-text);
+            color: var(--dark-bg);
         }
 
         #planet-bank {
-            border: 1px dashed #444;
-            padding: 8px;
-            min-height: 35px;
+            border: 1px dashed var(--light-border);
+            padding: 10px;
+            min-height: 50px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            margin-top: 8px;
-            background-color: #1e1e1e;
+            gap: 8px;
+            margin-top: 10px;
+            background-color: var(--darker-bg);
+            border-radius: 8px;
         }
 
         .tooltip {
             position: fixed;
-            background-color: #333;
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 4px;
-            font-size: 0.8em;
+            background-color: var(--tooltip-bg);
+            color: var(--text-color);
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.85em;
             z-index: 100;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow);
             text-align: left;
-            line-height: 1.4;
+            line-height: 1.5;
             max-width: 300px;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--light-border);
         }
         .tooltip.active {
             opacity: 1;
         }
         .tooltip strong {
-            color: #ffcc80;
+            color: var(--highlight-color);
+            font-weight: 600;
         }
         .tooltip span {
             display: block;
+            margin-bottom: 3px;
         }
         .tooltip hr {
             border: none;
-            border-top: 1px solid #444;
-            margin: 5px 0;
+            border-top: 1px solid var(--light-border);
+            margin: 8px 0;
         }
 
         #retrograde-panel {
             position: fixed;
-            background-color: #2a2a2a;
-            border: 1px solid #64b5f6;
-            border-radius: 5px;
-            padding: 10px 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            background-color: var(--panel-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: var(--shadow);
             z-index: 101;
             display: none;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
+            width: 220px;
+            backdrop-filter: blur(5px);
         }
         #retrograde-panel.active {
             display: flex;
@@ -287,144 +383,266 @@
         #retrograde-panel label {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             cursor: pointer;
-            color: #e0e0e0;
-            font-size: 0.9em;
+            color: var(--text-color);
+            font-size: 0.95em;
         }
         #retrograde-panel input[type="checkbox"] {
-            transform: scale(1.2);
+            transform: scale(1.3);
             cursor: pointer;
+            accent-color: var(--accent-color);
         }
         #retrograde-panel .panel-planet-name {
             font-weight: bold;
-            color: #ffcc80;
+            color: var(--highlight-color);
             font-size: 1.1em;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--light-border);
         }
 
         .planet.retrograde .retrograde-symbol {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: #ff5252;
             font-weight: bold;
-            margin-left: 2px;
+            margin-left: 3px;
             vertical-align: super;
         }
+        
         #language-selector {
-            padding: 5px;
-            border-radius: 4px;
-            border: 1px solid #64b5f6;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--accent-color);
+            background-color: var(--darker-bg);
+            color: var(--text-color);
             margin-left: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        #language-selector:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.3);
         }
 
         .controls-tip {
-            font-weight: bold;
-            color: #ffcc80;
-            margin-top: 5px;
+            font-weight: 500;
+            color: var(--highlight-color);
+            margin-top: 8px;
             font-size: 0.9em;
+            line-height: 1.4;
+            padding: 8px;
+            background-color: rgba(255, 204, 128, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid var(--highlight-color);
         }
 
         .hidden {
             display: none !important;
         }
 
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                max-width: 100%;
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(4, minmax(80px, auto));
+            }
+            
+            .chart-box {
+                min-height: 80px;
+            }
+            
+            .planet {
+                padding: 3px 6px;
+                font-size: 0.9em;
+                min-width: 50px;
+            }
+            
+            .controls {
+                padding: 15px;
+            }
+            
+            button {
+                padding: 7px 12px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chart-container {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(4, minmax(70px, auto));
+            }
+            
+            .chart-box {
+                min-height: 70px;
+                padding: 3px;
+            }
+            
+            .planet {
+                padding: 2px 4px;
+                font-size: 0.85em;
+                min-width: 45px;
+            }
+            
+            .planet-symbol {
+                font-size: 1em;
+            }
+            
+            .planet-degree-display {
+                font-size: 0.7em;
+            }
+            
+            .controls {
+                padding: 12px;
+            }
+            
+            .button-group {
+                gap: 5px;
+            }
+            
+            button {
+                padding: 6px 10px;
+                margin: 3px;
+                font-size: 0.85em;
+            }
+            
+            #language-selector {
+                padding: 5px 8px;
+                font-size: 0.85em;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div class="chart-title" id="chart-main-title">Interactive South Indian Vedic Astrology Chart</div>
+    <div class="app-container">
+        <div class="chart-title" id="chart-main-title">Interactive South Indian Vedic Astrology Chart</div>
 
-    <div class="chart-container" id="chart-container">
-        <div class="chart-box" data-sign="Pisces">
-            <div class="sign-label">Pi</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Pisces"></div>
-        </div>
-        <div class="chart-box" data-sign="Aries">
-            <div class="sign-label">Ar</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Aries"></div>
-        </div>
-        <div class="chart-box" data-sign="Taurus">
-            <div class="sign-label">Ta</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Taurus"></div>
-        </div>
-        <div class="chart-box" data-sign="Gemini">
-            <div class="sign-label">Ge</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Gemini"></div>
-        </div>
-        <div class="chart-box" data-sign="Aquarius">
-            <div class="sign-label">Aq</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Aquarius"></div>
-        </div>
-        <div id="central-empty-space"></div>
-        <div class="chart-box" data-sign="Cancer">
-            <div class="sign-label">Cn</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Cancer"></div>
-        </div>
-        <div class="chart-box" data-sign="Capricorn">
-            <div class="sign-label">Cp</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Capricorn"></div>
-        </div>
-        <div class="chart-box" data-sign="Leo">
-            <div class="sign-label">Le</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Leo"></div>
-        </div>
-        <div class="chart-box" data-sign="Sagittarius">
-            <div class="sign-label">Sg</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Sagittarius"></div>
-        </div>
-        <div class="chart-box" data-sign="Scorpio">
-            <div class="sign-label">Sc</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Scorpio"></div>
-        </div>
-        <div class="chart-box" data-sign="Libra">
-            <div class="sign-label">Li</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Libra"></div>
-        </div>
-        <div class="chart-box" data-sign="Virgo">
-            <div class="sign-label">Vi</div>
-            <div class="house-label"></div>
-            <div class="planets-container" data-sign="Virgo"></div>
-        </div>
-    </div>
+        <div class="main-content">
+            <div class="chart-container" id="chart-container">
+                <div class="chart-box" data-sign="Pisces">
+                    <div class="sign-label">Pi</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Pisces"></div>
+                </div>
+                <div class="chart-box" data-sign="Aries">
+                    <div class="sign-label">Ar</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Aries"></div>
+                </div>
+                <div class="chart-box" data-sign="Taurus">
+                    <div class="sign-label">Ta</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Taurus"></div>
+                </div>
+                <div class="chart-box" data-sign="Gemini">
+                    <div class="sign-label">Ge</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Gemini"></div>
+                </div>
+                <div class="chart-box" data-sign="Aquarius">
+                    <div class="sign-label">Aq</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Aquarius"></div>
+                </div>
+                <div id="central-empty-space">
+                    <div class="center-label">South Indian</div>
+                    <div class="center-label">Chart Style</div>
+                </div>
+                <div class="chart-box" data-sign="Cancer">
+                    <div class="sign-label">Cn</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Cancer"></div>
+                </div>
+                <div class="chart-box" data-sign="Capricorn">
+                    <div class="sign-label">Cp</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Capricorn"></div>
+                </div>
+                <div class="chart-box" data-sign="Leo">
+                    <div class="sign-label">Le</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Leo"></div>
+                </div>
+                <div class="chart-box" data-sign="Sagittarius">
+                    <div class="sign-label">Sg</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Sagittarius"></div>
+                </div>
+                <div class="chart-box" data-sign="Scorpio">
+                    <div class="sign-label">Sc</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Scorpio"></div>
+                </div>
+                <div class="chart-box" data-sign="Libra">
+                    <div class="sign-label">Li</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Libra"></div>
+                </div>
+                <div class="chart-box" data-sign="Virgo">
+                    <div class="sign-label">Vi</div>
+                    <div class="house-label"></div>
+                    <div class="planets-container" data-sign="Virgo"></div>
+                </div>
+            </div>
 
-    <div class="controls">
-        <div>
-            <span id="drag-planets-tip">Drag Planets to Chart (Double-click or drag to bank to remove):</span>
-            <select id="language-selector" onchange="setLanguage(this.value)">
-                <option value="en">English</option>
-                <option value="te">తెలుగు (Telugu)</option>
-            </select>
-            <div id="planet-bank">
-                <span class="planet Lagna" draggable="true" id="Lagna"><span class="planet-symbol">L</span></span>
-                <span class="planet Sun" draggable="true" id="Sun"><span class="planet-symbol">Su</span></span>
-                <span class="planet Moon" draggable="true" id="Moon"><span class="planet-symbol">Mo</span></span>
-                <span class="planet Mars" draggable="true" id="Mars"><span class="planet-symbol">Ma</span></span>
-                <span class="planet Mercury" draggable="true" id="Mercury"><span class="planet-symbol">Me</span></span>
-                <span class="planet Jupiter" draggable="true" id="Jupiter"><span class="planet-symbol">Ju</span></span>
-                <span class="planet Venus" draggable="true" id="Venus"><span class="planet-symbol">Ve</span></span>
-                <span class="planet Saturn" draggable="true" id="Saturn"><span class="planet-symbol">Sa</span></span>
-                <span class="planet Rahu" draggable="true" id="Rahu"><span class="planet-symbol">Ra</span></span>
-                <span class="planet Ketu" draggable="true" id="Ketu"><span class="planet-symbol">Ke</span></span>
+            <div class="controls-container">
+                <div class="controls">
+                    <div class="controls-section">
+                        <div class="controls-title">
+                            <i class="fas fa-globe"></i>
+                            <span id="drag-planets-tip">Planet Placement</span>
+                            <select id="language-selector" onchange="setLanguage(this.value)">
+                                <option value="en">English</option>
+                                <option value="te">తెలుగు (Telugu)</option>
+                            </select>
+                        </div>
+                        <div id="planet-bank">
+                            <span class="planet Lagna" draggable="true" id="Lagna"><span class="planet-symbol">L</span></span>
+                            <span class="planet Sun" draggable="true" id="Sun"><span class="planet-symbol">Su</span></span>
+                            <span class="planet Moon" draggable="true" id="Moon"><span class="planet-symbol">Mo</span></span>
+                            <span class="planet Mars" draggable="true" id="Mars"><span class="planet-symbol">Ma</span></span>
+                            <span class="planet Mercury" draggable="true" id="Mercury"><span class="planet-symbol">Me</span></span>
+                            <span class="planet Jupiter" draggable="true" id="Jupiter"><span class="planet-symbol">Ju</span></span>
+                            <span class="planet Venus" draggable="true" id="Venus"><span class="planet-symbol">Ve</span></span>
+                            <span class="planet Saturn" draggable="true" id="Saturn"><span class="planet-symbol">Sa</span></span>
+                            <span class="planet Rahu" draggable="true" id="Rahu"><span class="planet-symbol">Ra</span></span>
+                            <span class="planet Ketu" draggable="true" id="Ketu"><span class="planet-symbol">Ke</span></span>
+                        </div>
+                        <p id="drag-lagna-tip" class="controls-tip">
+                            <i class="fas fa-lightbulb"></i> Place Lagna in a chart box to define houses and see house keywords.
+                        </p>
+                    </div>
+
+                    <div class="controls-section">
+                        <div class="controls-title">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Chart Controls</span>
+                        </div>
+                        <div class="button-group">
+                            <button id="toggle-signs-btn" onclick="toggleSigns()"><i class="fas fa-eye"></i> Hide Signs</button>
+                            <button id="toggle-numbers-btn" onclick="toggleHouseNumbers()"><i class="fas fa-hashtag"></i> Hide Numbers</button>
+                            <button id="clear-chart-btn" onclick="resetChart()"><i class="fas fa-trash-alt"></i> Clear Chart</button>
+                        </div>
+                    </div>
+
+                    <div class="controls-section">
+                        <p id="degree-tip-text" class="controls-tip">
+                            <i class="fas fa-info-circle"></i> Click and drag a planet in the chart up or down to adjust its degree.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
-        <p id="drag-lagna-tip" class="controls-tip">&#x272A; Tip: Place Lagna in a chart box to define houses and see house keywords.</p>
-        <div>
-            <button id="toggle-signs-btn" onclick="toggleSigns()">Hide Signs</button>
-            <button id="toggle-numbers-btn" onclick="toggleHouseNumbers()">Hide Numbers</button>
-            <button id="clear-chart-btn" onclick="resetChart()">Clear Chart</button>
-        </div>
-        <p id="degree-tip-text">Tip: Click and drag a planet in the chart up or down to adjust its degree.</p>
     </div>
 
     <div id="planet-tooltip" class="tooltip"></div>
@@ -528,10 +746,10 @@
         const translations = {
             en: {
                 chartTitle: "Interactive South Indian Vedic Astrology Chart",
-                dragPlanetsTip: "Drag Planets to Chart (Double-click or drag to bank to remove):",
-                dragLagnaTip: "✨ Tip: Place Lagna in a chart box to define houses and see house keywords.",
+                dragPlanetsTip: "Planet Placement",
+                dragLagnaTip: "Place Lagna in a chart box to define houses and see house keywords.",
                 clearChart: "Clear Chart",
-                degreeTip: "Tip: Click and drag a planet in the chart up or down to adjust its degree.",
+                degreeTip: "Click and drag a planet in the chart up or down to adjust its degree.",
                 planet: "Planet",
                 nakshatra: "Nakshatra",
                 pada: "Pada",
@@ -605,10 +823,10 @@
             },
             te: {
                 chartTitle: "ఇంటరాక్టివ్ దక్షిణ భారతీయ వేద జ్యోతిష్య చార్ట్",
-                dragPlanetsTip: "గ్రహాలను చార్ట్‌కు లాగండి (తొలగించడానికి డబుల్-క్లిక్ చేయండి లేదా బ్యాంక్‌కు లాగండి):",
-                dragLagnaTip: "✨ చిట్కా: ఇళ్లని నిర్వచించడానికి మరియు ఇంటి కీవర్డ్స్ చూడటానికి లగ్నాని ఒక చార్ట్ బాక్స్‌లో ఉంచండి.",
+                dragPlanetsTip: "గ్రహాల ప్లేస్మెంట్",
+                dragLagnaTip: "ఇళ్లని నిర్వచించడానికి మరియు ఇంటి కీవర్డ్స్ చూడటానికి లగ్నాని ఒక చార్ట్ బాక్స్‌లో ఉంచండి.",
                 clearChart: "చార్ట్ క్లియర్ చేయండి",
-                degreeTip: "చిట్కా: చార్ట్‌లోని గ్రహంపై క్లిక్ చేసి పైకి లేదా క్రిందికి లాగడం ద్వారా దాని డిగ్రీని సర్దుబాటు చేయండి.",
+                degreeTip: "చార్ట్‌లోని గ్రహంపై క్లిక్ చేసి పైకి లేదా క్రిందికి లాగడం ద్వారా దాని డిగ్రీని సర్దుబాటు చేయండి.",
                 planet: "గ్రహం",
                 nakshatra: "నక్షత్రం",
                 pada: "పాద",
@@ -756,15 +974,15 @@
 
             document.getElementById('chart-main-title').textContent = langData.chartTitle;
             document.getElementById('drag-planets-tip').textContent = langData.dragPlanetsTip;
-            document.getElementById('drag-lagna-tip').textContent = langData.dragLagnaTip;
-            document.getElementById('clear-chart-btn').textContent = langData.clearChart;
-            document.getElementById('degree-tip-text').textContent = langData.degreeTip;
+            document.getElementById('drag-lagna-tip').innerHTML = `<i class="fas fa-lightbulb"></i> ${langData.dragLagnaTip}`;
+            document.getElementById('clear-chart-btn').innerHTML = `<i class="fas fa-trash-alt"></i> ${langData.clearChart}`;
+            document.getElementById('degree-tip-text').innerHTML = `<i class="fas fa-info-circle"></i> ${langData.degreeTip}`;
             document.getElementById('retrograde-label').textContent = langData.retrograde;
 
             const toggleSignsBtn = document.getElementById('toggle-signs-btn');
-            toggleSignsBtn.textContent = areSignsHidden ? langData.showSigns : langData.hideSigns;
+            toggleSignsBtn.innerHTML = `<i class="fas fa-eye"></i> ${areSignsHidden ? langData.showSigns : langData.hideSigns}`;
             const toggleNumbersBtn = document.getElementById('toggle-numbers-btn');
-            toggleNumbersBtn.textContent = areNumbersHidden ? langData.showNumbers : langData.hideNumbers;
+            toggleNumbersBtn.innerHTML = `<i class="fas fa-hashtag"></i> ${areNumbersHidden ? langData.showNumbers : langData.hideNumbers}`;
 
             document.querySelectorAll('.sign-label').forEach(label => {
                 const signName = label.closest('.chart-box').dataset.sign;
@@ -1085,7 +1303,7 @@
                 tooltipContent += `<span><strong>${langData.house}:</strong> ${langData.houseNames[houseNumber] || houseNumber + " " + langData.house}</span>`;
                 tooltipContent += `<span><strong>${langData.houseKeywordsTitle}:</strong> ${langData.houseKeywords[houseNumber] || houseInfo[houseNumber].keywords}</span>`;
             } else {
-                tooltipContent += `<span style="color:#ffcc80;">${langData.noHouseInfo}</span>`;
+                tooltipContent += `<span style="color:var(--highlight-color);">${langData.noHouseInfo}</span>`;
             }
 
             if (signOriginalData) {
@@ -1294,7 +1512,7 @@
                 }
             });
 
-            toggleBtn.textContent = areSignsHidden ? langData.showSigns : langData.hideSigns;
+            toggleBtn.innerHTML = `<i class="fas fa-eye"></i> ${areSignsHidden ? langData.showSigns : langData.hideSigns}`;
             hideSignTooltip();
         }
 
@@ -1317,7 +1535,7 @@
                 }
             });
 
-            toggleBtn.textContent = areNumbersHidden ? langData.showNumbers : langData.hideNumbers;
+            toggleBtn.innerHTML = `<i class="fas fa-hashtag"></i> ${areNumbersHidden ? langData.showNumbers : langData.hideNumbers}`;
         }
 
     </script>
