@@ -29,11 +29,12 @@
         .chart-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            /* Increased size for a bigger chart that fits all planets without scroll */
-            grid-template-rows: repeat(4, 119.25px); 
+            /* Changed to allow rows to grow dynamically based on content */
+            grid-template-rows: minmax(85px, auto) minmax(85px, auto) minmax(85px, auto) minmax(85px, auto); 
             gap: 1px;
-            width: 480px; /* Increased width */
-            height: 480px; /* Increased height */
+            width: 480px;
+            /* Height is now dynamic */
+            height: auto; 
             margin: auto;
             border: 1px solid #444; /* Light border */
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
@@ -56,6 +57,8 @@
             justify-content: flex-start; /* Planets container will start below the label space */
             text-align: center;
             padding: 3px;
+            /* Allow the box to grow vertically to contain content */
+            min-height: 85px; 
             overflow: visible; 
         }
 
@@ -108,15 +111,13 @@
             font-weight: bold;
         }
 
+        /* Adjusted font sizes for planets to be more readable */
         .planet {
             cursor: grab; /* Default cursor for drag */
             margin: 1px;
-            /* Increased font size for planet symbols */
-            font-size: 0.75em; 
-            /* Reduced padding around planets */
-            padding: 1px 2px;
+            font-size: 1em; /* Increased font size for planet symbols */
+            padding: 2px 4px; /* Increased padding around planets */
             border-radius: 3px;
-            /* Changed to row for single-line display (symbol + degree) */
             display: flex;
             flex-direction: row; 
             align-items: center; /* Align symbol and degree vertically */
@@ -130,14 +131,12 @@
 
         .planet-symbol {
             font-weight: bold;
-            font-size: 1em; /* This is relative to parent .planet font-size */
+            font-size: 1.2em; /* Increased symbol size relative to parent .planet */
         }
 
-        .planet-degree-display { /* This will only show degree now */
-            /* Increased degree text size relative to planet font size */
-            font-size: 0.8em; 
+        .planet-degree-display {
+            font-size: 0.8em; /* Adjusted degree text size relative to planet font size */
             color: #121212;
-            /* Adjusted margin for horizontal layout */
             margin-top: 0;
             margin-left: 2px;
         }
@@ -181,11 +180,10 @@
             /* Added margin-top to push planets down, creating space for the sign label */
             margin-top: 20px; 
             min-height: 20px; /* Still allows it to grow */
-            /* Removed scroll option as per new user request */
-            max-height: unset; 
-            overflow-y: unset;
+            /* This is the key change - allow the container to grow to fit content */
+            height: auto;
+            overflow-y: hidden;
         }
-        /* No scrollbar styling needed anymore */
 
 
         /* Highlight for the chart-box when dragging over it */
@@ -215,12 +213,6 @@
 
         .controls div {
             margin-bottom: 10px;
-        }
-
-        .controls label,
-        .controls span {
-            font-weight: 500;
-            margin-right: 8px;
         }
 
         button {
@@ -348,6 +340,10 @@
             font-size: 0.9em;
         }
         
+        .hidden {
+            display: none !important;
+        }
+        
     </style>
 </head>
 <body>
@@ -439,7 +435,11 @@
             </div>
         </div>
         <p id="drag-lagna-tip" class="controls-tip">&#x272A; Tip: Place Lagna in a chart box to define houses and see house keywords.</p>
-        <button id="clear-chart-btn" onclick="resetChart()">Clear Chart</button>
+        <div>
+            <button id="toggle-signs-btn" onclick="toggleSigns()">Hide Signs</button>
+            <button id="toggle-numbers-btn" onclick="toggleHouseNumbers()">Hide Numbers</button>
+            <button id="clear-chart-btn" onclick="resetChart()">Clear Chart</button>
+        </div>
         <p id="degree-tip-text">Tip: Click and drag a planet in the chart up or down to adjust its degree.</p>
     </div>
 
@@ -538,6 +538,12 @@
                 lagna: "Lagna",
                 noHouseInfo: "(Place Lagna to see House info)",
                 
+                // New strings for buttons
+                hideSigns: "Hide Signs",
+                showSigns: "Show Signs",
+                hideNumbers: "Hide Numbers",
+                showNumbers: "Show Numbers",
+
                 signs: {
                     Aries: "Aries", Taurus: "Taurus", Gemini: "Gemini", Cancer: "Cancer", Leo: "Leo", Virgo: "Virgo",
                     Libra: "Libra", Scorpio: "Scorpio", Sagittarius: "Sagittarius", Capricorn: "Capricorn",
@@ -607,6 +613,12 @@
                 retrograde: "వక్రి",
                 lagna: "లగ్న",
                 noHouseInfo: "(ఇంటి సమాచారం చూడటానికి లగ్నాని ఉంచండి)",
+                
+                // New strings for buttons
+                hideSigns: "రాశులను దాచండి",
+                showSigns: "రాశులను చూపించు",
+                hideNumbers: "నంబర్‌లను దాచండి",
+                showNumbers: "నంబర్‌లను చూపించు",
 
                 signs: {
                     Aries: "మేషం", Taurus: "వృషభం", Gemini: "మిథునం", Cancer: "కర్కాటకం", Leo: "సింహం", Virgo: "కన్య",
@@ -665,6 +677,8 @@
         const planetDegrees = {}; // Stores { sign: "...", degree: #, isRetrograde: boolean }
         let initialPlanetBankHTML = '';
         let lagnaSign = null;
+        let areSignsHidden = false;
+        let areNumbersHidden = false;
 
         let isChangingDegree = false;
         let degreeChangePlanet = null;
@@ -741,6 +755,12 @@
             document.getElementById('clear-chart-btn').textContent = langData.clearChart;
             document.getElementById('degree-tip-text').textContent = langData.degreeTip;
             document.getElementById('retrograde-label').textContent = langData.retrograde;
+
+            // Update new button text
+            const toggleSignsBtn = document.getElementById('toggle-signs-btn');
+            toggleSignsBtn.textContent = areSignsHidden ? langData.showSigns : langData.hideSigns;
+            const toggleNumbersBtn = document.getElementById('toggle-numbers-btn');
+            toggleNumbersBtn.textContent = areNumbersHidden ? langData.showNumbers : langData.hideNumbers;
 
             // Update Sign Labels
             document.querySelectorAll('.sign-label').forEach(label => {
@@ -1021,6 +1041,9 @@
         // --- Sign Tooltip Functions ---
 
         function showSignTooltip(e) {
+            // Do not show tooltip if signs are hidden
+            if (e.target.classList.contains('hidden')) return;
+            
             hideAllTooltipsAndPanels();
 
             const signLabel = e.target;
@@ -1224,6 +1247,12 @@
             resetAllPlanetDegrees();
             hideAllTooltipsAndPanels();
             updateHouseNumbers();
+            
+            // Reset visibility states and buttons
+            areSignsHidden = false;
+            areNumbersHidden = false;
+            toggleSigns(true); // Force show
+            toggleHouseNumbers(true); // Force show
             updateUIForLanguage();
         }
 
@@ -1253,6 +1282,53 @@
                 }
             });
         }
+
+        // --- New Functions to Toggle Visibility ---
+        function toggleSigns(forceShow = false) {
+            const signLabels = document.querySelectorAll('.sign-label');
+            const toggleBtn = document.getElementById('toggle-signs-btn');
+            const langData = translations[currentLanguage];
+            
+            if (forceShow) {
+                areSignsHidden = false;
+            } else {
+                areSignsHidden = !areSignsHidden;
+            }
+            
+            signLabels.forEach(label => {
+                if (areSignsHidden) {
+                    label.classList.add('hidden');
+                } else {
+                    label.classList.remove('hidden');
+                }
+            });
+
+            toggleBtn.textContent = areSignsHidden ? langData.showSigns : langData.hideSigns;
+            hideSignTooltip();
+        }
+
+        function toggleHouseNumbers(forceShow = false) {
+            const houseLabels = document.querySelectorAll('.house-label');
+            const toggleBtn = document.getElementById('toggle-numbers-btn');
+            const langData = translations[currentLanguage];
+
+            if (forceShow) {
+                areNumbersHidden = false;
+            } else {
+                areNumbersHidden = !areNumbersHidden;
+            }
+            
+            houseLabels.forEach(label => {
+                if (areNumbersHidden) {
+                    label.classList.add('hidden');
+                } else {
+                    label.classList.remove('hidden');
+                }
+            });
+
+            toggleBtn.textContent = areNumbersHidden ? langData.showNumbers : langData.hideNumbers;
+        }
+
     </script>
 </body>
 </html>
