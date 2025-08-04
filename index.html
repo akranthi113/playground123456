@@ -29,6 +29,7 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: var(--transition);
+            touch-action: manipulation;
         }
 
         body {
@@ -39,6 +40,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            -webkit-overflow-scrolling: touch;
         }
 
         .app-container {
@@ -179,6 +181,7 @@
             min-width: 60px;
             justify-content: center;
             z-index: 2;
+            touch-action: none;
         }
 
         .planet-symbol {
@@ -209,6 +212,11 @@
         .planet:active {
             cursor: grabbing;
             transform: translateY(0);
+        }
+
+        .planet.touch-active {
+            transform: scale(1.2);
+            z-index: 10;
         }
 
         .Sun { background-color: #ffd700; }
@@ -447,6 +455,16 @@
             justify-content: center;
             gap: 8px;
             margin-top: 10px;
+        }
+
+        /* Touch area padding for better mobile interaction */
+        .planet::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
         }
 
         @media (max-width: 768px) {
@@ -935,31 +953,46 @@
         });
 
         function attachDelegatedListeners() {
+            // Mouse events
             document.addEventListener('dragstart', handleDragStart);
             document.addEventListener('dragend', handleDragEnd);
             document.addEventListener('mousedown', handleMouseDown);
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('dblclick', handleDblClick);
 
+            // Touch events
+            document.addEventListener('touchstart', handleTouchStart, { passive: false });
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+            document.addEventListener('touchcancel', handleTouchEnd);
+
             document.querySelectorAll('.chart-box[data-sign]').forEach(box => {
                 box.addEventListener('dragover', allowDrop);
                 box.addEventListener('drop', dropToChart);
                 box.addEventListener('dragleave', removeDragOverHighlight);
 
-                box.querySelector('.planets-container').addEventListener('mouseover', handleContainerMouseOver);
-                box.querySelector('.planets-container').addEventListener('mouseout', handleContainerMouseOut);
-                box.querySelector('.planets-container').addEventListener('click', handlePlanetClick);
+                // Touch events for chart boxes
+                box.addEventListener('touchstart', handleTouchStart, { passive: false });
+                box.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+                const planetsContainer = box.querySelector('.planets-container');
+                planetsContainer.addEventListener('mouseover', handleContainerMouseOver);
+                planetsContainer.addEventListener('mouseout', handleContainerMouseOut);
+                planetsContainer.addEventListener('click', handlePlanetClick);
             });
 
             document.querySelectorAll('.sign-label').forEach(label => {
                 label.addEventListener('mouseover', showSignTooltip);
                 label.addEventListener('mouseout', hideSignTooltip);
+                label.addEventListener('touchstart', handleTouchStart, { passive: false });
             });
 
             const planetBank = document.getElementById('planet-bank');
             planetBank.addEventListener('dragover', allowDrop);
             planetBank.addEventListener('drop', dropToBank);
             planetBank.addEventListener('dragleave', removeDragOverHighlight);
+            planetBank.addEventListener('touchstart', handleTouchStart, { passive: false });
+            
             retrogradeCheckbox.addEventListener('change', toggleRetrograde);
             document.addEventListener('click', handleOutsideClick);
         }
@@ -1131,6 +1164,93 @@
 
                 document.addEventListener('mousemove', handleDegreeChangeMouseMove);
                 hideAllTooltipsAndPanels();
+            }
+        }
+
+        function handleTouchStart(e) {
+            const planetElement = e.target.closest('.planet');
+            if (!planetElement) return;
+
+            // Prevent page scrolling when touching a planet
+            if (planetElement) {
+                e.preventDefault();
+                planetElement.classList.add('touch-active');
+            }
+
+            if (planetElement.parentElement.classList.contains('planets-container')) {
+                // Start degree adjustment
+                isChangingDegree = true;
+                degreeChangePlanet = planetElement;
+                initialMouseY = e.touches[0].clientY;
+                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
+                
+                // Show tooltip immediately for touch devices
+                showPlanetTooltip(planetElement);
+            } else if (planetElement.parentElement.id === 'planet-bank') {
+                // Start drag from planet bank
+                draggedPlanetId = planetElement.id;
+                planetElement.style.opacity = '0.5';
+                hideAllTooltipsAndPanels();
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!isChangingDegree || !degreeChangePlanet) return;
+            
+            e.preventDefault(); // Prevent scrolling while adjusting degree
+            
+            const touch = e.touches[0];
+            const deltaY = initialMouseY - touch.clientY;
+            const degreeChange = deltaY / 20;
+            let newDegree = initialPlanetDegree + degreeChange;
+            newDegree = Math.max(0, Math.min(29.99, newDegree));
+
+            if (planetDegrees[degreeChangePlanet.id]) {
+                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
+                updatePlanetDegreeDisplay(degreeChangePlanet);
+                showPlanetTooltip(degreeChangePlanet);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            const planetElement = e.target.closest('.planet');
+            if (planetElement) {
+                planetElement.classList.remove('touch-active');
+                planetElement.style.opacity = '1';
+            }
+
+            if (isChangingDegree) {
+                isChangingDegree = false;
+                degreeChangePlanet = null;
+            }
+            
+            // Handle drop for touch devices
+            if (draggedPlanetId) {
+                const touch = e.changedTouches[0];
+                const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                if (elementAtTouch) {
+                    const targetContainer = elementAtTouch.closest('.chart-box[data-sign]')?.querySelector('.planets-container') || 
+                                          elementAtTouch.closest('#planet-bank');
+                    
+                    if (targetContainer) {
+                        const planetToMove = document.getElementById(draggedPlanetId);
+                        if (planetToMove && planetToMove.parentElement !== targetContainer) {
+                            if (targetContainer.classList.contains('planets-container')) {
+                                dropToChart({ 
+                                    preventDefault: () => {}, 
+                                    target: targetContainer.parentElement 
+                                });
+                            } else if (targetContainer.id === 'planet-bank') {
+                                dropToBank({ 
+                                    preventDefault: () => {}, 
+                                    target: targetContainer 
+                                });
+                            }
+                        }
+                    }
+                }
+                draggedPlanetId = null;
             }
         }
 
