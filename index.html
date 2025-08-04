@@ -525,7 +525,9 @@
 </head>
 <body>
     <div class="app-container">
-        <div class="chart-title" id="chart-main-title">Interactive South Indian Vedic Astrology Chart</div>
+        <div class="chart-title" id="chart-main-title">
+            <i class="fas fa-star-and-crescent"></i> Interactive South Indian Vedic Astrology Chart
+        </div>
 
         <div class="main-content">
             <div class="chart-container" id="chart-container">
@@ -658,33 +660,33 @@
     <script>
         const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
         const nakshatras = [
-            { name: 'Ashwini', range: '0° – 13°20′ Aries', ruler: 'Ketu', symbol: 'Horse Head', deity: 'Ashwini Kumaras' },
-            { name: 'Bharani', range: '13°20′ – 26°40′ Aries', ruler: 'Venus', symbol: 'Yoni', deity: 'Yama' },
-            { name: 'Krittika', range: '26°40′ Aries – 10° Taurus', ruler: 'Sun', symbol: 'Razor/Axe', deity: 'Agni' },
-            { name: 'Rohini', range: '10° – 23°20′ Taurus', ruler: 'Moon', symbol: 'Cart/Chariot', deity: 'Brahma' },
-            { name: 'Mrigashira', range: '23°20′ Taurus – 6°40′ Gemini', ruler: 'Mars', symbol: 'Deer Head', deity: 'Soma (Moon)' },
-            { name: 'Ardra', range: '6°40′ – 20° Gemini', ruler: 'Rahu', symbol: 'Teardrop/Diamond', deity: 'Rudra (Shiva)' },
-            { name: 'Punarvasu', range: '20° Gemini – 3°20′ Cancer', ruler: 'Jupiter', symbol: 'Quiver of Arrows', deity: 'Aditi' },
-            { name: 'Pushya', range: '3°20′ – 16°40′ Cancer', ruler: 'Saturn', symbol: 'Cow Udder', deity: 'Brihaspati (Jupiter)' },
-            { name: 'Ashlesha', range: '16°40′ – 30° Cancer', ruler: 'Mercury', symbol: 'Coiled Serpent', deity: 'Nagas (Serpents)' },
-            { name: 'Magha', range: '0° – 13°20′ Leo', ruler: 'Ketu', symbol: 'Royal Throne', deity: 'Pitri (Ancestors)' },
-            { name: 'Purva Phalguni', range: '13°20′ – 26°40′ Leo', ruler: 'Venus', symbol: 'Front Legs of Bed', deity: 'Bhaga (God of Wealth)' },
-            { name: 'Uttara Phalguni', range: '26°40′ Leo – 10° Virgo', ruler: 'Sun', symbol: 'Back Legs of Bed', deity: 'Aryaman' },
-            { name: 'Hasta', range: '10° – 23°20′ Virgo', ruler: 'Moon', symbol: 'Hand', deity: 'Savitar (Sun God)' },
-            { name: 'Chitra', range: '23°20′ Virgo – 6°40′ Libra', ruler: 'Mars', symbol: 'Pearl', deity: 'Vishwakarma' },
-            { name: 'Swati', range: '6°40′ – 20° Libra', ruler: 'Rahu', symbol: 'Coral/Sword', deity: 'Vayu (Wind God)' },
-            { name: 'Vishakha', range: '20° Libra – 3°20′ Scorpio', ruler: 'Jupiter', symbol: 'Triumphal Arch', deity: 'Indragni' },
-            { name: 'Anuradha', range: '3°20′ – 16°40′ Scorpio', ruler: 'Saturn', symbol: 'Lotus', deity: 'Mitra (Sun God)' },
-            { name: 'Jyeshtha', range: '16°40′ – 30° Scorpio', ruler: 'Mercury', symbol: 'Earring/Umbrella', deity: 'Indra' },
-            { name: 'Moola', range: '0° – 13°20′ Sagittarius', ruler: 'Ketu', symbol: 'Root', deity: 'Nirriti (Goddess of Calamity)' },
-            { name: 'Purva Ashadha', range: '13°20′ – 26°40′ Sagittarius', ruler: 'Venus', symbol: 'Elephant Tusk/Fan', deity: 'Apah (Water Goddess)' },
-            { name: 'Uttara Ashadha', range: '26°40′ Sagittarius – 10° Capricorn', ruler: 'Sun', symbol: 'Elephant Tusk/Plank', deity: 'Vishvadevas' },
-            { name: 'Shravana', range: '10° – 23°20′ Capricorn', ruler: 'Moon', symbol: 'Ear', deity: 'Vishnu' },
-            { name: 'Dhanishta', range: '23°20′ Capricorn – 6°40′ Aquarius', ruler: 'Mars', symbol: 'Musical Drum', deity: 'Vasu (Gods of Light)' },
-            { name: 'Shatabhisha', range: '6°40′ – 20° Aquarius', ruler: 'Rahu', symbol: '100 Physicians/Stars', deity: 'Varuna (God of Cosmic Law)' },
-            { name: 'Purva Bhadrapada', range: '20° Aquarius – 3°20′ Pisces', ruler: 'Jupiter', symbol: 'Front Legs of Funeral Cot', deity: 'Aja Ekapad' },
-            { name: 'Uttara Bhadrapada', range: '3°20′ – 16°40′ Pisces', ruler: 'Saturn', symbol: 'Back Legs of Funeral Cot', deity: 'Ahir Bhudhanya' },
-            { name: 'Revati', range: '16°40′ – 30° Pisces', ruler: 'Mercury', symbol: 'Drum/Fish', deity: 'Pushan (Nourishment)' }
+            { name: 'Ashwini', range: '0° – 13°20′ Aries', ruler: 'Ketu', symbol: 'Horse Head', deity: 'Ashwini Kumaras', keywords: 'Speed, Healing, Initiative' },
+            { name: 'Bharani', range: '13°20′ – 26°40′ Aries', ruler: 'Venus', symbol: 'Yoni', deity: 'Yama', keywords: 'Transformation, Patience, Sacrifice' },
+            { name: 'Krittika', range: '26°40′ Aries – 10° Taurus', ruler: 'Sun', symbol: 'Razor/Axe', deity: 'Agni', keywords: 'Purification, Leadership, Protection' },
+            { name: 'Rohini', range: '10° – 23°20′ Taurus', ruler: 'Moon', symbol: 'Cart/Chariot', deity: 'Brahma', keywords: 'Growth, Fertility, Creativity' },
+            { name: 'Mrigashira', range: '23°20′ Taurus – 6°40′ Gemini', ruler: 'Mars', symbol: 'Deer Head', deity: 'Soma (Moon)', keywords: 'Curiosity, Searching, Wandering' },
+            { name: 'Ardra', range: '6°40′ – 20° Gemini', ruler: 'Rahu', symbol: 'Teardrop/Diamond', deity: 'Rudra (Shiva)', keywords: 'Transformation, Intensity, Destruction/Renewal' },
+            { name: 'Punarvasu', range: '20° Gemini – 3°20′ Cancer', ruler: 'Jupiter', symbol: 'Quiver of Arrows', deity: 'Aditi', keywords: 'Renewal, Nourishment, Return' },
+            { name: 'Pushya', range: '3°20′ – 16°40′ Cancer', ruler: 'Saturn', symbol: 'Cow Udder', deity: 'Brihaspati (Jupiter)', keywords: 'Nourishment, Protection, Spirituality' },
+            { name: 'Ashlesha', range: '16°40′ – 30° Cancer', ruler: 'Mercury', symbol: 'Coiled Serpent', deity: 'Nagas (Serpents)', keywords: 'Intuition, Hypnotic, Mysticism' },
+            { name: 'Magha', range: '0° – 13°20′ Leo', ruler: 'Ketu', symbol: 'Royal Throne', deity: 'Pitri (Ancestors)', keywords: 'Authority, Ancestors, Legacy' },
+            { name: 'Purva Phalguni', range: '13°20′ – 26°40′ Leo', ruler: 'Venus', symbol: 'Front Legs of Bed', deity: 'Bhaga (God of Wealth)', keywords: 'Enjoyment, Luxury, Romance' },
+            { name: 'Uttara Phalguni', range: '26°40′ Leo – 10° Virgo', ruler: 'Sun', symbol: 'Back Legs of Bed', deity: 'Aryaman', keywords: 'Support, Union, Philanthropy' },
+            { name: 'Hasta', range: '10° – 23°20′ Virgo', ruler: 'Moon', symbol: 'Hand', deity: 'Savitar (Sun God)', keywords: 'Skill, Dexterity, Craftsmanship' },
+            { name: 'Chitra', range: '23°20′ Virgo – 6°40′ Libra', ruler: 'Mars', symbol: 'Pearl', deity: 'Vishwakarma', keywords: 'Artistry, Beauty, Architecture' },
+            { name: 'Swati', range: '6°40′ – 20° Libra', ruler: 'Rahu', symbol: 'Coral/Sword', deity: 'Vayu (Wind God)', keywords: 'Independence, Movement, Adaptability' },
+            { name: 'Vishakha', range: '20° Libra – 3°20′ Scorpio', ruler: 'Jupiter', symbol: 'Triumphal Arch', deity: 'Indragni', keywords: 'Purpose, Determination, Achievement' },
+            { name: 'Anuradha', range: '3°20′ – 16°40′ Scorpio', ruler: 'Saturn', symbol: 'Lotus', deity: 'Mitra (Sun God)', keywords: 'Devotion, Friendship, Success through Others' },
+            { name: 'Jyeshtha', range: '16°40′ – 30° Scorpio', ruler: 'Mercury', symbol: 'Earring/Umbrella', deity: 'Indra', keywords: 'Seniority, Protection, Power' },
+            { name: 'Moola', range: '0° – 13°20′ Sagittarius', ruler: 'Ketu', symbol: 'Root', deity: 'Nirriti (Goddess of Calamity)', keywords: 'Foundation, Destruction, Research' },
+            { name: 'Purva Ashadha', range: '13°20′ – 26°40′ Sagittarius', ruler: 'Venus', symbol: 'Elephant Tusk/Fan', deity: 'Apah (Water Goddess)', keywords: 'Invincibility, Persistence, Water Energy' },
+            { name: 'Uttara Ashadha', range: '26°40′ Sagittarius – 10° Capricorn', ruler: 'Sun', symbol: 'Elephant Tusk/Plank', deity: 'Vishvadevas', keywords: 'Universal Victory, Dharma, Leadership' },
+            { name: 'Shravana', range: '10° – 23°20′ Capricorn', ruler: 'Moon', symbol: 'Ear', deity: 'Vishnu', keywords: 'Listening, Learning, Wisdom' },
+            { name: 'Dhanishta', range: '23°20′ Capricorn – 6°40′ Aquarius', ruler: 'Mars', symbol: 'Musical Drum', deity: 'Vasu (Gods of Light)', keywords: 'Wealth, Rhythm, Celebration' },
+            { name: 'Shatabhisha', range: '6°40′ – 20° Aquarius', ruler: 'Rahu', symbol: '100 Physicians/Stars', deity: 'Varuna (God of Cosmic Law)', keywords: 'Healing, Mysticism, Hidden Knowledge' },
+            { name: 'Purva Bhadrapada', range: '20° Aquarius – 3°20′ Pisces', ruler: 'Jupiter', symbol: 'Front Legs of Funeral Cot', deity: 'Aja Ekapad', keywords: 'Transformation, Spiritual Fire, Austerity' },
+            { name: 'Uttara Bhadrapada', range: '3°20′ – 16°40′ Pisces', ruler: 'Saturn', symbol: 'Back Legs of Funeral Cot', deity: 'Ahir Bhudhanya', keywords: 'Stability, Prosperity, Universal Love' },
+            { name: 'Revati', range: '16°40′ – 30° Pisces', ruler: 'Mercury', symbol: 'Drum/Fish', deity: 'Pushan (Nourishment)', keywords: 'Nourishment, Protection, Completion' }
         ];
 
         // Data for planets and signs with keywords
@@ -709,8 +711,8 @@
             Jupiter: ["Sagittarius", "Pisces"],
             Venus: ["Taurus", "Libra"],
             Saturn: ["Capricorn", "Aquarius"],
-            Rahu: ["Aquarius"], // Using modern co-rulership
-            Ketu: ["Scorpio"] // Using modern co-rulership
+            Rahu: ["Aquarius"],
+            Ketu: ["Scorpio"]
         };
 
         const houseInfo = {
@@ -972,7 +974,7 @@
         function updateUIForLanguage() {
             const langData = translations[currentLanguage];
 
-            document.getElementById('chart-main-title').textContent = langData.chartTitle;
+            document.getElementById('chart-main-title').innerHTML = `<i class="fas fa-star-and-crescent"></i> ${langData.chartTitle}`;
             document.getElementById('drag-planets-tip').textContent = langData.dragPlanetsTip;
             document.getElementById('drag-lagna-tip').innerHTML = `<i class="fas fa-lightbulb"></i> ${langData.dragLagnaTip}`;
             document.getElementById('clear-chart-btn').innerHTML = `<i class="fas fa-trash-alt"></i> ${langData.clearChart}`;
@@ -1211,7 +1213,7 @@
 
             let tooltipContent = `<span><strong>${langData.planets[planetElement.id] || planetElement.id}</strong></span>`;
             tooltipContent += `<span>${planetData.degree.toFixed(2)}° ${langData.signs[planetData.sign] || planetData.sign}</span>`;
-            tooltipContent += `<span>${langData.nakshatra}: ${nakData.nakshatra.name} – ${langData.pada} ${nakData.pada}</span>`;
+            tooltipContent += `<span>${langData.nakshatra}: ${nakData.nakshatra.name} (${nakData.nakshatra.keywords}) – ${langData.pada} ${nakData.pada}</span>`;
             if (planetData.isRetrograde) {
                 tooltipContent += `<span>(${langData.retrograde})</span>`;
             }
@@ -1250,7 +1252,6 @@
             tooltipElement.style.left = `${tooltipLeft}px`;
             tooltipElement.style.top = `${tooltipTop}px`;
         }
-
 
         function getHouseLordships(planetId) {
             if (!lagnaSign || !planetRulerships[planetId]) return [];
@@ -1537,7 +1538,6 @@
 
             toggleBtn.innerHTML = `<i class="fas fa-hashtag"></i> ${areNumbersHidden ? langData.showNumbers : langData.hideNumbers}`;
         }
-
     </script>
 </body>
 </html>
