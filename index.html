@@ -41,7 +41,6 @@
             flex-direction: column;
             align-items: center;
             -webkit-overflow-scrolling: touch;
-            overflow-x: hidden;
         }
 
         .app-container {
@@ -79,7 +78,6 @@
             background-color: var(--border-color);
             border-radius: 8px;
             overflow: hidden;
-            touch-action: none;
 
             grid-template-areas:
                 "pisces aries taurus gemini"
@@ -467,23 +465,6 @@
             left: -10px;
             right: -10px;
             bottom: -10px;
-        }
-
-        /* Mobile-specific styles */
-        .mobile-tap-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-        }
-        .planet.tap-active .mobile-tap-indicator {
-            opacity: 1;
         }
 
         @media (max-width: 768px) {
@@ -957,12 +938,6 @@
         let selectedPlanetForRetrograde = null;
         let currentLanguage = 'en';
 
-        // Mobile interaction variables
-        let lastTapTime = 0;
-        let tapTimeout = null;
-        let longPressTimeout = null;
-        let isDragging = false;
-
         document.addEventListener('DOMContentLoaded', () => {
             initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML;
             attachDelegatedListeners();
@@ -985,7 +960,7 @@
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('dblclick', handleDblClick);
 
-            // Touch events with passive: false to allow preventDefault
+            // Touch events
             document.addEventListener('touchstart', handleTouchStart, { passive: false });
             document.addEventListener('touchmove', handleTouchMove, { passive: false });
             document.addEventListener('touchend', handleTouchEnd);
@@ -1196,38 +1171,12 @@
             const planetElement = e.target.closest('.planet');
             if (!planetElement) return;
 
-            // Prevent default touch behavior to prevent scrolling
-            e.preventDefault();
-            
-            // Clear any pending timeouts
-            clearTimeout(tapTimeout);
-            clearTimeout(longPressTimeout);
-            
-            // Add visual feedback for touch
-            planetElement.classList.add('touch-active');
-            
-            // Start long press timer (for drop action on mobile)
-            longPressTimeout = setTimeout(() => {
-                if (planetElement.parentElement.classList.contains('planets-container')) {
-                    // This is a long press - treat as drop action
-                    const planetBank = document.getElementById('planet-bank');
-                    if (planetElement.parentElement !== planetBank) {
-                        planetElement.parentElement.removeChild(planetElement);
-                        planetBank.appendChild(planetElement);
-                        
-                        if (planetElement.id === 'Lagna') {
-                            lagnaSign = null;
-                            updateHouseNumbers();
-                        }
-                        
-                        delete planetDegrees[planetElement.id];
-                        updatePlanetDegreeDisplay(planetElement);
-                        updateRetrogradeSymbol(planetElement);
-                        hideAllTooltipsAndPanels();
-                    }
-                }
-            }, 500); // 500ms for long press
-            
+            // Prevent page scrolling when touching a planet
+            if (planetElement) {
+                e.preventDefault();
+                planetElement.classList.add('touch-active');
+            }
+
             if (planetElement.parentElement.classList.contains('planets-container')) {
                 // Start degree adjustment
                 isChangingDegree = true;
@@ -1246,74 +1195,30 @@
         }
 
         function handleTouchMove(e) {
-            const planetElement = document.elementFromPoint(
-                e.touches[0].clientX, 
-                e.touches[0].clientY
-            )?.closest('.planet');
+            if (!isChangingDegree || !degreeChangePlanet) return;
             
-            if (!planetElement) {
-                e.preventDefault();
-                return;
-            }
+            e.preventDefault(); // Prevent scrolling while adjusting degree
+            
+            const touch = e.touches[0];
+            const deltaY = initialMouseY - touch.clientY;
+            const degreeChange = deltaY / 20;
+            let newDegree = initialPlanetDegree + degreeChange;
+            newDegree = Math.max(0, Math.min(29.99, newDegree));
 
-            if (isChangingDegree && degreeChangePlanet) {
-                e.preventDefault(); // Prevent scrolling while adjusting degree
-                
-                const touch = e.touches[0];
-                const deltaY = initialMouseY - touch.clientY;
-                const degreeChange = deltaY / 20;
-                let newDegree = initialPlanetDegree + degreeChange;
-                newDegree = Math.max(0, Math.min(29.99, newDegree));
-
-                if (planetDegrees[degreeChangePlanet.id]) {
-                    planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
-                    updatePlanetDegreeDisplay(degreeChangePlanet);
-                    showPlanetTooltip(degreeChangePlanet);
-                }
-            } else if (draggedPlanetId) {
-                e.preventDefault(); // Prevent scrolling during drag
-                isDragging = true;
-                
-                // Update drag visual feedback
-                const draggedElement = document.getElementById(draggedPlanetId);
-                if (draggedElement) {
-                    draggedElement.style.transform = 'scale(1.1)';
-                }
+            if (planetDegrees[degreeChangePlanet.id]) {
+                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
+                updatePlanetDegreeDisplay(degreeChangePlanet);
+                showPlanetTooltip(degreeChangePlanet);
             }
         }
 
         function handleTouchEnd(e) {
-            const touch = e.changedTouches[0];
-            const planetElement = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.planet');
-            
-            // Clear long press timeout
-            clearTimeout(longPressTimeout);
-            
+            const planetElement = e.target.closest('.planet');
             if (planetElement) {
                 planetElement.classList.remove('touch-active');
                 planetElement.style.opacity = '1';
-                
-                // Handle tap (not drag)
-                if (!isDragging && !isChangingDegree) {
-                    const currentTime = new Date().getTime();
-                    const tapLength = currentTime - lastTapTime;
-                    
-                    if (tapLength < 300 && tapLength > 0) {
-                        // Double tap - show retrograde panel
-                        clearTimeout(tapTimeout);
-                        handlePlanetClick({ target: planetElement, stopPropagation: () => {} });
-                    } else {
-                        // Single tap - show tooltip
-                        tapTimeout = setTimeout(() => {
-                            if (planetElement.parentElement.classList.contains('planets-container')) {
-                                showPlanetTooltip(planetElement);
-                            }
-                        }, 300);
-                    }
-                    lastTapTime = currentTime;
-                }
             }
-            
+
             if (isChangingDegree) {
                 isChangingDegree = false;
                 degreeChangePlanet = null;
@@ -1321,6 +1226,7 @@
             
             // Handle drop for touch devices
             if (draggedPlanetId) {
+                const touch = e.changedTouches[0];
                 const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
                 
                 if (elementAtTouch) {
@@ -1344,14 +1250,7 @@
                         }
                     }
                 }
-                
-                // Reset drag state
-                const draggedElement = document.getElementById(draggedPlanetId);
-                if (draggedElement) {
-                    draggedElement.style.transform = '';
-                }
                 draggedPlanetId = null;
-                isDragging = false;
             }
         }
 
