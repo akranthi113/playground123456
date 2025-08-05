@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vedic Astrology South Indian Chart</title>
     <style>
         :root {
@@ -21,8 +21,6 @@
             --panel-bg: #2a2a2a;
             --shadow: 0 4px 12px rgba(0,0,0,0.5);
             --transition: all 0.3s ease;
-            --mobile-breakpoint: 768px;
-            --small-mobile-breakpoint: 480px;
         }
 
         * {
@@ -32,7 +30,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: var(--transition);
             touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -81,6 +78,7 @@
             background-color: var(--border-color);
             border-radius: 8px;
             overflow: hidden;
+
             grid-template-areas:
                 "pisces aries taurus gemini"
                 "aquarius center center cancer"
@@ -219,20 +217,6 @@
         .planet.touch-active {
             transform: scale(1.2);
             z-index: 10;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        .planet.dragging {
-            opacity: 0.8;
-            transform: scale(1.1);
-            z-index: 100;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
-        }
-
-        .planet.being-adjusted {
-            transform: scale(1.15);
-            z-index: 50;
-            box-shadow: 0 0 0 2px var(--accent-color);
         }
 
         .Sun { background-color: #ffd700; }
@@ -477,13 +461,12 @@
         .planet::after {
             content: '';
             position: absolute;
-            top: -15px;
-            left: -15px;
-            right: -15px;
-            bottom: -15px;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
         }
 
-        /* Mobile-specific styles */
         @media (max-width: 768px) {
             .chart-container {
                 max-width: 100%;
@@ -509,24 +492,9 @@
                 padding: 7px 12px;
                 font-size: 0.9em;
             }
-
-            .tooltip {
-                max-width: 280px;
-                font-size: 0.8em;
-                padding: 10px 12px;
-            }
-
-            #retrograde-panel {
-                width: 200px;
-                padding: 12px;
-            }
         }
 
         @media (max-width: 480px) {
-            body {
-                padding: 15px;
-            }
-            
             .chart-container {
                 grid-template-columns: repeat(4, 1fr);
                 grid-template-rows: repeat(4, minmax(70px, auto));
@@ -569,63 +537,6 @@
                 padding: 5px 8px;
                 font-size: 0.85em;
             }
-
-            .tooltip {
-                max-width: 250px;
-                font-size: 0.75em;
-                padding: 8px 10px;
-            }
-
-            #retrograde-panel {
-                width: 180px;
-                padding: 10px;
-                font-size: 0.85em;
-            }
-        }
-
-        /* Orientation-specific adjustments */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .chart-container {
-                max-width: 90%;
-            }
-            
-            .main-content {
-                flex-direction: row;
-                align-items: flex-start;
-            }
-            
-            .controls-container {
-                max-width: 300px;
-            }
-        }
-
-        /* Long press menu for mobile */
-        .context-menu {
-            position: fixed;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            padding: 10px 0;
-            box-shadow: var(--shadow);
-            z-index: 102;
-            display: none;
-            flex-direction: column;
-            min-width: 150px;
-        }
-        
-        .context-menu.active {
-            display: flex;
-        }
-        
-        .context-menu-item {
-            padding: 8px 15px;
-            color: var(--text-color);
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        
-        .context-menu-item:hover {
-            background-color: rgba(100, 181, 246, 0.2);
         }
     </style>
 </head>
@@ -747,9 +658,6 @@
                         <p id="degree-tip-text" class="controls-tip">
                             <i class="fas fa-info-circle"></i> Click and drag a planet in the chart up or down to adjust its degree.
                         </p>
-                        <p id="mobile-tip-text" class="controls-tip" style="display: none;">
-                            <i class="fas fa-mobile-alt"></i> Touch & hold a planet for more options.
-                        </p>
                     </div>
                 </div>
             </div>
@@ -766,19 +674,7 @@
         </label>
     </div>
 
-    <div id="context-menu" class="context-menu">
-        <div class="context-menu-item" id="context-retrograde">Toggle Retrograde</div>
-        <div class="context-menu-item" id="context-remove">Remove Planet</div>
-        <div class="context-menu-item" id="context-adjust-degree">Adjust Degree</div>
-    </div>
-
     <script>
-        // Check if device is touch capable
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-        if (isTouchDevice) {
-            document.getElementById('mobile-tip-text').style.display = 'block';
-        }
-
         const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
         const nakshatras = [
             { name: 'Ashwini', range: '0° – 13°20′ Aries', ruler: 'Ketu', symbol: 'Horse Head', deity: 'Ashwini Kumaras', keywords: 'Speed, Healing, Initiative' },
@@ -885,9 +781,6 @@
                 retrograde: "Retrograde",
                 lagna: "Lagna",
                 noHouseInfo: "(Place Lagna to see House info)",
-                toggleRetrograde: "Toggle Retrograde",
-                removePlanet: "Remove Planet",
-                adjustDegree: "Adjust Degree",
 
                 hideSigns: "Hide Signs",
                 showSigns: "Show Signs",
@@ -965,9 +858,6 @@
                 retrograde: "వక్రి",
                 lagna: "లగ్న",
                 noHouseInfo: "(ఇంటి సమాచారం చూడటానికి లగ్నాని ఉంచండి)",
-                toggleRetrograde: "వక్రిని మార్చు",
-                removePlanet: "గ్రహాన్ని తీసివేయి",
-                adjustDegree: "డిగ్రీని సర్దుబాటు చేయండి",
 
                 hideSigns: "రాశులను దాచండి",
                 showSigns: "రాశులను చూపించు",
@@ -1048,31 +938,10 @@
         let selectedPlanetForRetrograde = null;
         let currentLanguage = 'en';
 
-        // Context menu variables
-        const contextMenu = document.getElementById('context-menu');
-        const contextRetrograde = document.getElementById('context-retrograde');
-        const contextRemove = document.getElementById('context-remove');
-        const contextAdjustDegree = document.getElementById('context-adjust-degree');
-        let contextMenuPlanet = null;
-        let longPressTimer = null;
-        const LONG_PRESS_DURATION = 500; // ms
-
         document.addEventListener('DOMContentLoaded', () => {
             initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML;
             attachDelegatedListeners();
             updateHouseNumbers();
-
-            // Initialize context menu actions
-            contextRetrograde.addEventListener('click', handleContextRetrograde);
-            contextRemove.addEventListener('click', handleContextRemove);
-            contextAdjustDegree.addEventListener('click', handleContextAdjustDegree);
-
-            // Hide context menu when clicking elsewhere
-            document.addEventListener('click', (e) => {
-                if (!contextMenu.contains(e.target) && !e.target.closest('.planet')) {
-                    hideContextMenu();
-                }
-            });
 
             const savedLang = localStorage.getItem('chartLanguage');
             if (savedLang && translations[savedLang]) {
@@ -1144,11 +1013,6 @@
             document.getElementById('degree-tip-text').innerHTML = `<i class="fas fa-info-circle"></i> ${langData.degreeTip}`;
             document.getElementById('retrograde-label').textContent = langData.retrograde;
 
-            // Update context menu items
-            contextRetrograde.textContent = langData.toggleRetrograde;
-            contextRemove.textContent = langData.removePlanet;
-            contextAdjustDegree.textContent = langData.adjustDegree;
-
             const toggleSignsBtn = document.getElementById('toggle-signs-btn');
             toggleSignsBtn.innerHTML = `<i class="fas fa-eye"></i> ${areSignsHidden ? langData.showSigns : langData.hideSigns}`;
             const toggleNumbersBtn = document.getElementById('toggle-numbers-btn');
@@ -1172,16 +1036,15 @@
             if (planetElement) {
                 draggedPlanetId = planetElement.id;
                 e.dataTransfer.setData('text/plain', draggedPlanetId);
-                planetElement.classList.add('dragging');
+                planetElement.style.opacity = '0.5';
                 hideAllTooltipsAndPanels();
-                hideContextMenu();
             }
         }
 
         function handleDragEnd(e) {
             const planetElement = e.target.closest('.planet');
             if (planetElement) {
-                planetElement.classList.remove('dragging');
+                planetElement.style.opacity = '1';
                 draggedPlanetId = null;
             }
         }
@@ -1244,7 +1107,6 @@
             }
 
             targetContainer.appendChild(planetToMove);
-            planetToMove.classList.remove('dragging');
 
             const sign = targetContainer.dataset.sign;
             if (!planetDegrees[planetToMove.id]) {
@@ -1258,11 +1120,6 @@
             }
             updatePlanetDegreeDisplay(planetToMove);
             updateRetrogradeSymbol(planetToMove);
-
-            // Provide haptic feedback on mobile if available
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
-            }
         }
 
         function dropToBank(e) {
@@ -1283,8 +1140,6 @@
                     currentParent.removeChild(planetToMove);
                 }
                 targetBank.appendChild(planetToMove);
-                planetToMove.classList.remove('dragging');
-                
                 if (planetToMove.id === 'Lagna') {
                     lagnaSign = null;
                     updateHouseNumbers();
@@ -1293,11 +1148,6 @@
                 delete planetDegrees[planetToMove.id];
                 updatePlanetDegreeDisplay(planetToMove);
                 updateRetrogradeSymbol(planetToMove);
-            }
-
-            // Provide haptic feedback on mobile if available
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
             }
         }
 
@@ -1311,11 +1161,9 @@
                 degreeChangePlanet = planetElement;
                 initialMouseY = e.clientY;
                 initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
-                planetElement.classList.add('being-adjusted');
 
                 document.addEventListener('mousemove', handleDegreeChangeMouseMove);
                 hideAllTooltipsAndPanels();
-                hideContextMenu();
             }
         }
 
@@ -1324,15 +1172,10 @@
             if (!planetElement) return;
 
             // Prevent page scrolling when touching a planet
-            e.preventDefault();
-            
-            // Start long press timer
-            longPressTimer = setTimeout(() => {
-                if (planetElement.parentElement.classList.contains('planets-container')) {
-                    showContextMenu(planetElement, e.touches[0].clientX, e.touches[0].clientY);
-                }
-                longPressTimer = null;
-            }, LONG_PRESS_DURATION);
+            if (planetElement) {
+                e.preventDefault();
+                planetElement.classList.add('touch-active');
+            }
 
             if (planetElement.parentElement.classList.contains('planets-container')) {
                 // Start degree adjustment
@@ -1340,33 +1183,25 @@
                 degreeChangePlanet = planetElement;
                 initialMouseY = e.touches[0].clientY;
                 initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
-                planetElement.classList.add('being-adjusted');
                 
                 // Show tooltip immediately for touch devices
                 showPlanetTooltip(planetElement);
             } else if (planetElement.parentElement.id === 'planet-bank') {
                 // Start drag from planet bank
                 draggedPlanetId = planetElement.id;
-                planetElement.classList.add('dragging');
+                planetElement.style.opacity = '0.5';
                 hideAllTooltipsAndPanels();
-                hideContextMenu();
             }
         }
 
         function handleTouchMove(e) {
-            // Cancel long press if movement detected
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
             if (!isChangingDegree || !degreeChangePlanet) return;
             
             e.preventDefault(); // Prevent scrolling while adjusting degree
             
             const touch = e.touches[0];
             const deltaY = initialMouseY - touch.clientY;
-            const degreeChange = deltaY / (isTouchDevice ? 10 : 20); // More sensitive on touch devices
+            const degreeChange = deltaY / 20;
             let newDegree = initialPlanetDegree + degreeChange;
             newDegree = Math.max(0, Math.min(29.99, newDegree));
 
@@ -1378,49 +1213,40 @@
         }
 
         function handleTouchEnd(e) {
-            // Cancel long press if it hasn't fired yet
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-
             const planetElement = e.target.closest('.planet');
             if (planetElement) {
-                planetElement.classList.remove('touch-active', 'dragging', 'being-adjusted');
+                planetElement.classList.remove('touch-active');
+                planetElement.style.opacity = '1';
             }
 
             if (isChangingDegree) {
                 isChangingDegree = false;
-                if (degreeChangePlanet) {
-                    degreeChangePlanet.classList.remove('being-adjusted');
-                }
                 degreeChangePlanet = null;
             }
             
             // Handle drop for touch devices
             if (draggedPlanetId) {
                 const touch = e.changedTouches[0];
-                const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+                const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
                 
-                // Check all elements at the touch point, not just the top one
-                for (const element of elements) {
-                    const targetContainer = element.closest('.chart-box[data-sign]')?.querySelector('.planets-container') || 
-                                          element.closest('#planet-bank');
+                if (elementAtTouch) {
+                    const targetContainer = elementAtTouch.closest('.chart-box[data-sign]')?.querySelector('.planets-container') || 
+                                          elementAtTouch.closest('#planet-bank');
                     
                     if (targetContainer) {
                         const planetToMove = document.getElementById(draggedPlanetId);
                         if (planetToMove && planetToMove.parentElement !== targetContainer) {
-                            const event = { 
-                                preventDefault: () => {}, 
-                                target: targetContainer.id === 'planet-bank' ? targetContainer : targetContainer.parentElement
-                            };
-                            
                             if (targetContainer.classList.contains('planets-container')) {
-                                dropToChart(event);
-                            } else {
-                                dropToBank(event);
+                                dropToChart({ 
+                                    preventDefault: () => {}, 
+                                    target: targetContainer.parentElement 
+                                });
+                            } else if (targetContainer.id === 'planet-bank') {
+                                dropToBank({ 
+                                    preventDefault: () => {}, 
+                                    target: targetContainer 
+                                });
                             }
-                            break;
                         }
                     }
                 }
@@ -1445,9 +1271,6 @@
         function handleMouseUp() {
             if (isChangingDegree) {
                 isChangingDegree = false;
-                if (degreeChangePlanet) {
-                    degreeChangePlanet.classList.remove('being-adjusted');
-                }
                 degreeChangePlanet = null;
                 document.removeEventListener('mousemove', handleDegreeChangeMouseMove);
             }
@@ -1833,78 +1656,6 @@
             });
 
             toggleBtn.innerHTML = `<i class="fas fa-hashtag"></i> ${areNumbersHidden ? langData.showNumbers : langData.hideNumbers}`;
-        }
-
-        // Context menu functions
-        function showContextMenu(planetElement, x, y) {
-            hideAllTooltipsAndPanels();
-            contextMenuPlanet = planetElement;
-            
-            const langData = translations[currentLanguage];
-            document.getElementById('context-retrograde').textContent = 
-                `${langData.toggleRetrograde} ${planetDegrees[planetElement.id]?.isRetrograde ? 'Off' : 'On'}`;
-            
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
-            
-            // Ensure menu stays within viewport
-            if (parseFloat(contextMenu.style.left) + contextMenu.offsetWidth > window.innerWidth) {
-                contextMenu.style.left = `${window.innerWidth - contextMenu.offsetWidth - 5}px`;
-            }
-            if (parseFloat(contextMenu.style.top) + contextMenu.offsetHeight > window.innerHeight) {
-                contextMenu.style.top = `${window.innerHeight - contextMenu.offsetHeight - 5}px`;
-            }
-            
-            contextMenu.classList.add('active');
-            
-            // Provide haptic feedback
-            if (navigator.vibrate) navigator.vibrate(50);
-        }
-
-        function hideContextMenu() {
-            contextMenu.classList.remove('active');
-            contextMenuPlanet = null;
-        }
-
-        function handleContextRetrograde() {
-            if (contextMenuPlanet && planetDegrees[contextMenuPlanet.id]) {
-                planetDegrees[contextMenuPlanet.id].isRetrograde = !planetDegrees[contextMenuPlanet.id].isRetrograde;
-                updateRetrogradeSymbol(contextMenuPlanet);
-                showPlanetTooltip(contextMenuPlanet);
-                hideContextMenu();
-            }
-        }
-
-        function handleContextRemove() {
-            if (contextMenuPlanet) {
-                const currentContainer = contextMenuPlanet.parentElement;
-                if (currentContainer && currentContainer.classList.contains('planets-container')) {
-                    currentContainer.removeChild(contextMenuPlanet);
-                    document.getElementById('planet-bank').appendChild(contextMenuPlanet);
-
-                    if (contextMenuPlanet.id === 'Lagna') {
-                        lagnaSign = null;
-                        updateHouseNumbers();
-                    }
-
-                    delete planetDegrees[contextMenuPlanet.id];
-                    updatePlanetDegreeDisplay(contextMenuPlanet);
-                    updateRetrogradeSymbol(contextMenuPlanet);
-                    hideAllTooltipsAndPanels();
-                    hideContextMenu();
-                }
-            }
-        }
-
-        function handleContextAdjustDegree() {
-            if (contextMenuPlanet) {
-                isChangingDegree = true;
-                degreeChangePlanet = contextMenuPlanet;
-                initialPlanetDegree = planetDegrees[contextMenuPlanet.id]?.degree || 0;
-                contextMenuPlanet.classList.add('being-adjusted');
-                showPlanetTooltip(contextMenuPlanet);
-                hideContextMenu();
-            }
         }
     </script>
 </body>
