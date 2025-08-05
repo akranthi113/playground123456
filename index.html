@@ -219,30 +219,6 @@
             z-index: 10;
         }
 
-        .planet.dragging {
-            position: fixed;
-            z-index: 1000;
-            pointer-events: none;
-            transform: scale(1.1);
-            opacity: 0.8;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-
-        .planet-ghost {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.3);
-            border: 2px dashed var(--accent-color);
-            border-radius: 5px;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .planet-ghost.visible {
-            opacity: 1;
-        }
-
         .Sun { background-color: #ffd700; }
         .Moon { background-color: #e0e0e0; }
         .Mars { background-color: #ff5252; }
@@ -441,17 +417,6 @@
             margin-left: 3px;
             vertical-align: super;
         }
-
-        .mobile-tap-hint {
-            display: none;
-            position: absolute;
-            bottom: -20px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 0.7em;
-            color: var(--light-text);
-        }
         
         #language-selector {
             padding: 6px 10px;
@@ -502,45 +467,6 @@
             bottom: -10px;
         }
 
-        /* Mobile-specific styles */
-        .mobile-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .mobile-panel {
-            background-color: var(--panel-bg);
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .mobile-panel-title {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            color: var(--highlight-color);
-        }
-
-        .mobile-panel-content {
-            margin-bottom: 15px;
-        }
-
-        .mobile-panel-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
         @media (max-width: 768px) {
             .chart-container {
                 max-width: 100%;
@@ -565,22 +491,6 @@
             button {
                 padding: 7px 12px;
                 font-size: 0.9em;
-            }
-
-            #language-selector {
-                font-size: 16px; /* Prevent iOS zoom */
-            }
-
-            .mobile-tap-hint {
-                display: block;
-            }
-
-            #retrograde-panel {
-                width: 90%;
-                max-width: 300px;
-                left: 50% !important;
-                top: 50% !important;
-                transform: translate(-50%, -50%);
             }
         }
 
@@ -764,16 +674,6 @@
         </label>
     </div>
 
-    <div class="mobile-overlay" id="mobile-overlay">
-        <div class="mobile-panel">
-            <div class="mobile-panel-title" id="mobile-panel-title"></div>
-            <div class="mobile-panel-content" id="mobile-panel-content"></div>
-            <div class="mobile-panel-buttons">
-                <button onclick="hideMobilePanel()">Close</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
         const nakshatras = [
@@ -881,8 +781,6 @@
                 retrograde: "Retrograde",
                 lagna: "Lagna",
                 noHouseInfo: "(Place Lagna to see House info)",
-                tapForDetails: "Tap for details",
-                longPressForOptions: "Long press for options",
 
                 hideSigns: "Hide Signs",
                 showSigns: "Show Signs",
@@ -960,8 +858,6 @@
                 retrograde: "వక్రి",
                 lagna: "లగ్న",
                 noHouseInfo: "(ఇంటి సమాచారం చూడటానికి లగ్నాని ఉంచండి)",
-                tapForDetails: "వివరాల కోసం టాప్ చేయండి",
-                longPressForOptions: "ఎంపికల కోసం పొడవుగా నొక్కండి",
 
                 hideSigns: "రాశులను దాచండి",
                 showSigns: "రాశులను చూపించు",
@@ -1041,18 +937,11 @@
         const panelPlanetName = retrogradePanel.querySelector('.panel-planet-name');
         let selectedPlanetForRetrograde = null;
         let currentLanguage = 'en';
-        let isMobile = false;
-        let touchStartTime = 0;
-        let longPressTimer = null;
-        let ghostElement = null;
-        let activeTouchId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             initialPlanetBankHTML = document.getElementById('planet-bank').innerHTML;
-            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             attachDelegatedListeners();
             updateHouseNumbers();
-            createGhostElement();
 
             const savedLang = localStorage.getItem('chartLanguage');
             if (savedLang && translations[savedLang]) {
@@ -1062,12 +951,6 @@
                 setLanguage('en');
             }
         });
-
-        function createGhostElement() {
-            ghostElement = document.createElement('div');
-            ghostElement.className = 'planet-ghost';
-            document.body.appendChild(ghostElement);
-        }
 
         function attachDelegatedListeners() {
             // Mouse events
@@ -1102,7 +985,6 @@
                 label.addEventListener('mouseover', showSignTooltip);
                 label.addEventListener('mouseout', hideSignTooltip);
                 label.addEventListener('touchstart', handleTouchStart, { passive: false });
-                label.addEventListener('touchend', handleSignLabelTouch);
             });
 
             const planetBank = document.getElementById('planet-bank');
@@ -1156,14 +1038,6 @@
                 e.dataTransfer.setData('text/plain', draggedPlanetId);
                 planetElement.style.opacity = '0.5';
                 hideAllTooltipsAndPanels();
-                
-                // For mobile, create a ghost element
-                if (isMobile) {
-                    ghostElement.innerHTML = planetElement.innerHTML;
-                    ghostElement.className = `planet-ghost ${planetElement.className.replace('planet-ghost', '')}`;
-                    ghostElement.style.width = `${planetElement.offsetWidth}px`;
-                    ghostElement.style.height = `${planetElement.offsetHeight}px`;
-                }
             }
         }
 
@@ -1172,10 +1046,6 @@
             if (planetElement) {
                 planetElement.style.opacity = '1';
                 draggedPlanetId = null;
-                
-                if (isMobile) {
-                    ghostElement.classList.remove('visible');
-                }
             }
         }
 
@@ -1250,11 +1120,6 @@
             }
             updatePlanetDegreeDisplay(planetToMove);
             updateRetrogradeSymbol(planetToMove);
-            
-            // Haptic feedback on mobile
-            if (isMobile && navigator.vibrate) {
-                navigator.vibrate(50);
-            }
         }
 
         function dropToBank(e) {
@@ -1283,11 +1148,6 @@
                 delete planetDegrees[planetToMove.id];
                 updatePlanetDegreeDisplay(planetToMove);
                 updateRetrogradeSymbol(planetToMove);
-                
-                // Haptic feedback on mobile
-                if (isMobile && navigator.vibrate) {
-                    navigator.vibrate(50);
-                }
             }
         }
 
@@ -1308,154 +1168,57 @@
         }
 
         function handleTouchStart(e) {
-            if (e.touches.length > 1) return; // Ignore multi-touch
-            
             const planetElement = e.target.closest('.planet');
-            const signLabel = e.target.closest('.sign-label');
-            
-            if (!planetElement && !signLabel) return;
-            
-            e.preventDefault();
-            touchStartTime = Date.now();
-            activeTouchId = e.touches[0].identifier;
-            
+            if (!planetElement) return;
+
+            // Prevent page scrolling when touching a planet
             if (planetElement) {
+                e.preventDefault();
                 planetElement.classList.add('touch-active');
+            }
+
+            if (planetElement.parentElement.classList.contains('planets-container')) {
+                // Start degree adjustment
+                isChangingDegree = true;
+                degreeChangePlanet = planetElement;
+                initialMouseY = e.touches[0].clientY;
+                initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
                 
-                if (planetElement.parentElement.classList.contains('planets-container')) {
-                    // Start degree adjustment
-                    isChangingDegree = true;
-                    degreeChangePlanet = planetElement;
-                    initialMouseY = e.touches[0].clientY;
-                    initialPlanetDegree = planetDegrees[planetElement.id]?.degree || 0;
-                    
-                    // Show tooltip immediately for touch devices
-                    showPlanetTooltip(planetElement);
-                    
-                    // Set up long press for retrograde panel
-                    longPressTimer = setTimeout(() => {
-                        handlePlanetClick({ target: planetElement, preventDefault: () => {} });
-                    }, 500);
-                } else if (planetElement.parentElement.id === 'planet-bank') {
-                    // Start drag from planet bank
-                    draggedPlanetId = planetElement.id;
-                    planetElement.style.opacity = '0.5';
-                    hideAllTooltipsAndPanels();
-                    
-                    // Create ghost element for visual feedback
-                    ghostElement.innerHTML = planetElement.innerHTML;
-                    ghostElement.className = `planet-ghost ${planetElement.className.replace('planet-ghost', '')}`;
-                    ghostElement.style.width = `${planetElement.offsetWidth}px`;
-                    ghostElement.style.height = `${planetElement.offsetHeight}px`;
-                    ghostElement.style.left = `${e.touches[0].clientX - planetElement.offsetWidth/2}px`;
-                    ghostElement.style.top = `${e.touches[0].clientY - planetElement.offsetHeight/2}px`;
-                    ghostElement.classList.add('visible');
-                }
-            } else if (signLabel) {
-                // Handle sign label touch
-                longPressTimer = setTimeout(() => {
-                    showSignTooltip({ target: signLabel });
-                }, 300);
+                // Show tooltip immediately for touch devices
+                showPlanetTooltip(planetElement);
+            } else if (planetElement.parentElement.id === 'planet-bank') {
+                // Start drag from planet bank
+                draggedPlanetId = planetElement.id;
+                planetElement.style.opacity = '0.5';
+                hideAllTooltipsAndPanels();
             }
         }
 
         function handleTouchMove(e) {
-            if (!activeTouchId) return;
+            if (!isChangingDegree || !degreeChangePlanet) return;
             
-            // Find our specific touch
-            let touch;
-            for (let i = 0; i < e.touches.length; i++) {
-                if (e.touches[i].identifier === activeTouchId) {
-                    touch = e.touches[i];
-                    break;
-                }
-            }
-            if (!touch) return;
+            e.preventDefault(); // Prevent scrolling while adjusting degree
             
-            e.preventDefault();
-            
-            // Cancel long press if moved too much
-            if (longPressTimer) {
-                const movedDistance = Math.sqrt(
-                    Math.pow(touch.clientX - e.target.getBoundingClientRect().left, 2) +
-                    Math.pow(touch.clientY - e.target.getBoundingClientRect().top, 2)
-                );
-                if (movedDistance > 10) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-            }
-            
-            if (isChangingDegree && degreeChangePlanet) {
-                // Degree adjustment
-                const deltaY = initialMouseY - touch.clientY;
-                const degreeChange = deltaY / 20;
-                let newDegree = initialPlanetDegree + degreeChange;
-                newDegree = Math.max(0, Math.min(29.99, newDegree));
+            const touch = e.touches[0];
+            const deltaY = initialMouseY - touch.clientY;
+            const degreeChange = deltaY / 20;
+            let newDegree = initialPlanetDegree + degreeChange;
+            newDegree = Math.max(0, Math.min(29.99, newDegree));
 
-                if (planetDegrees[degreeChangePlanet.id]) {
-                    planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
-                    updatePlanetDegreeDisplay(degreeChangePlanet);
-                    showPlanetTooltip(degreeChangePlanet);
-                }
-            } else if (draggedPlanetId) {
-                // Dragging a planet
-                const planetElement = document.getElementById(draggedPlanetId);
-                if (planetElement) {
-                    ghostElement.style.left = `${touch.clientX - planetElement.offsetWidth/2}px`;
-                    ghostElement.style.top = `${touch.clientY - planetElement.offsetHeight/2}px`;
-                    
-                    // Highlight potential drop targets
-                    const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
-                    const currentHighlighted = document.querySelector('.drag-over');
-                    
-                    if (currentHighlighted && (!elementAtTouch || !currentHighlighted.contains(elementAtTouch))) {
-                        currentHighlighted.classList.remove('drag-over');
-                    }
-                    
-                    if (elementAtTouch) {
-                        const targetContainer = elementAtTouch.closest('.chart-box[data-sign]') || 
-                                              elementAtTouch.closest('#planet-bank');
-                        
-                        if (targetContainer && targetContainer !== currentHighlighted) {
-                            targetContainer.classList.add('drag-over');
-                        }
-                    }
-                }
+            if (planetDegrees[degreeChangePlanet.id]) {
+                planetDegrees[degreeChangePlanet.id].degree = parseFloat(newDegree.toFixed(2));
+                updatePlanetDegreeDisplay(degreeChangePlanet);
+                showPlanetTooltip(degreeChangePlanet);
             }
         }
 
         function handleTouchEnd(e) {
-            if (!activeTouchId) return;
-            
-            // Find our specific touch
-            let touch;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === activeTouchId) {
-                    touch = e.changedTouches[i];
-                    break;
-                }
-            }
-            if (!touch) return;
-            
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-            
-            const planetElement = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.planet');
-            const signLabel = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.sign-label');
-            
+            const planetElement = e.target.closest('.planet');
             if (planetElement) {
                 planetElement.classList.remove('touch-active');
                 planetElement.style.opacity = '1';
-                
-                // Handle tap (short touch)
-                if (Date.now() - touchStartTime < 300 && !isChangingDegree && !draggedPlanetId) {
-                    if (planetElement.parentElement.classList.contains('planets-container')) {
-                        showPlanetTooltip(planetElement);
-                    }
-                }
             }
-            
+
             if (isChangingDegree) {
                 isChangingDegree = false;
                 degreeChangePlanet = null;
@@ -1463,6 +1226,7 @@
             
             // Handle drop for touch devices
             if (draggedPlanetId) {
+                const touch = e.changedTouches[0];
                 const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
                 
                 if (elementAtTouch) {
@@ -1486,28 +1250,7 @@
                         }
                     }
                 }
-                
-                ghostElement.classList.remove('visible');
                 draggedPlanetId = null;
-            }
-            
-            // Remove any remaining drag highlights
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            
-            activeTouchId = null;
-        }
-
-        function handleSignLabelTouch(e) {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
-            
-            const signLabel = e.target.closest('.sign-label');
-            if (!signLabel) return;
-            
-            if (Date.now() - touchStartTime < 300) { // Short tap
-                showSignTooltip({ target: signLabel });
             }
         }
 
@@ -1607,53 +1350,9 @@
                 }
             }
 
-            if (isMobile) {
-                // Show in mobile panel instead of tooltip
-                showMobilePanel(
-                    `${langData.planets[planetElement.id] || planetElement.id}`,
-                    tooltipContent,
-                    planetElement
-                );
-            } else {
-                planetTooltip.innerHTML = tooltipContent;
-                updateTooltipPosition(planetElement, planetTooltip);
-                planetTooltip.classList.add('active');
-            }
-        }
-
-        function showMobilePanel(title, content, targetElement) {
-            const panel = document.getElementById('mobile-overlay');
-            const panelTitle = document.getElementById('mobile-panel-title');
-            const panelContent = document.getElementById('mobile-panel-content');
-            
-            panelTitle.textContent = title;
-            panelContent.innerHTML = content;
-            
-            panel.style.display = 'flex';
-            
-            // Position near the target element if provided
-            if (targetElement) {
-                const rect = targetElement.getBoundingClientRect();
-                const panelElement = panel.querySelector('.mobile-panel');
-                panelElement.style.position = 'absolute';
-                panelElement.style.left = `${rect.left}px`;
-                panelElement.style.top = `${rect.bottom + 10}px`;
-                
-                // Adjust if going off screen
-                if (parseFloat(panelElement.style.left) + panelElement.offsetWidth > window.innerWidth) {
-                    panelElement.style.left = `${window.innerWidth - panelElement.offsetWidth - 10}px`;
-                }
-                if (parseFloat(panelElement.style.top) + panelElement.offsetHeight > window.innerHeight) {
-                    panelElement.style.top = `${rect.top - panelElement.offsetHeight - 10}px`;
-                }
-                if (parseFloat(panelElement.style.top) < 0) {
-                    panelElement.style.top = '10px';
-                }
-            }
-        }
-
-        function hideMobilePanel() {
-            document.getElementById('mobile-overlay').style.display = 'none';
+            planetTooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(planetElement, planetTooltip);
+            planetTooltip.classList.add('active');
         }
 
         function updateTooltipPosition(targetElement, tooltipElement) {
@@ -1732,17 +1431,9 @@
                 tooltipContent += `<span><strong>${langData.ruler}:</strong> ${signOriginalData.ruler} | <strong>${langData.element}:</strong> ${langData.elements[signOriginalData.element] || signOriginalData.element} | <strong>${langData.modality}:</strong> ${langData.modalities[signOriginalData.modality] || signOriginalData.modality}</span>`;
             }
 
-            if (isMobile) {
-                showMobilePanel(
-                    `${langData.signs[signName] || signName}`,
-                    tooltipContent,
-                    signLabel
-                );
-            } else {
-                signTooltip.innerHTML = tooltipContent;
-                updateTooltipPosition(signLabel, signTooltip);
-                signTooltip.classList.add('active');
-            }
+            signTooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(signLabel, signTooltip);
+            signTooltip.classList.add('active');
         }
 
         function hideSignTooltip() {
@@ -1764,25 +1455,17 @@
                 retrogradeCheckbox.checked = planetData.isRetrograde;
 
                 const rect = clickedPlanet.getBoundingClientRect();
-                
-                if (isMobile) {
-                    retrogradePanel.style.left = '50%';
-                    retrogradePanel.style.top = '50%';
-                    retrogradePanel.style.transform = 'translate(-50%, -50%)';
-                } else {
-                    retrogradePanel.style.left = `${rect.right + 10}px`;
-                    retrogradePanel.style.top = `${rect.top}px`;
-                    retrogradePanel.style.transform = 'none';
+                retrogradePanel.style.left = `${rect.right + 10}px`;
+                retrogradePanel.style.top = `${rect.top}px`;
 
-                    if (parseFloat(retrogradePanel.style.left) + retrogradePanel.offsetWidth > window.innerWidth) {
-                        retrogradePanel.style.left = `${rect.left - retrogradePanel.offsetWidth - 10}px`;
-                    }
-                    if (parseFloat(retrogradePanel.style.top) < 0) {
-                        retrogradePanel.style.top = `5px`;
-                    }
-                    if (parseFloat(retrogradePanel.style.top) + retrogradePanel.offsetHeight > window.innerHeight) {
-                        retrogradePanel.style.top = `${window.innerHeight - retrogradePanel.offsetHeight - 5}px`;
-                    }
+                if (parseFloat(retrogradePanel.style.left) + retrogradePanel.offsetWidth > window.innerWidth) {
+                    retrogradePanel.style.left = `${rect.left - retrogradePanel.offsetWidth - 10}px`;
+                }
+                if (parseFloat(retrogradePanel.style.top) < 0) {
+                    retrogradePanel.style.top = `5px`;
+                }
+                if (parseFloat(retrogradePanel.style.top) + retrogradePanel.offsetHeight > window.innerHeight) {
+                    retrogradePanel.style.top = `${window.innerHeight - retrogradePanel.offsetHeight - 5}px`;
                 }
 
                 retrogradePanel.classList.add('active');
@@ -1798,11 +1481,6 @@
                 updateRetrogradeSymbol(selectedPlanetForRetrograde);
                 if (planetTooltip.classList.contains('active') && document.querySelector('.planet.hovered-for-tooltip') === selectedPlanetForRetrograde) {
                     showPlanetTooltip(selectedPlanetForRetrograde);
-                }
-                
-                // Haptic feedback on mobile
-                if (isMobile && navigator.vibrate) {
-                    navigator.vibrate(50);
                 }
             }
         }
@@ -1837,7 +1515,7 @@
                 !e.target.closest('#language-selector')) {
                 hideRetrogradePanel();
             }
-            if (!e.target.closest('.tooltip') && !e.target.closest('.planet') && !e.target.closest('.sign-label') && !e.target.closest('#retrograde-panel') && !e.target.closest('#language-selector') && !e.target.closest('#mobile-overlay')) {
+            if (!e.target.closest('.tooltip') && !e.target.closest('.planet') && !e.target.closest('.sign-label') && !e.target.closest('#retrograde-panel') && !e.target.closest('#language-selector')) {
                 hideAllTooltipsAndPanels();
             }
         }
@@ -1846,7 +1524,6 @@
             hidePlanetTooltip();
             hideSignTooltip();
             hideRetrogradePanel();
-            hideMobilePanel();
         }
 
         function getNakshatraAndPada(sign, degree) {
